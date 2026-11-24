@@ -1,0 +1,147 @@
+[
+  {
+    "file": "roof-brown.png",
+    "source": "image(8).png",
+    "crop": [
+      136,
+      16,
+      178,
+      72
+    ],
+    "edge_tiling": "period-aligned crop",
+    "size": [
+      42,
+      56
+    ]
+  },
+  {
+    "file": "roof-slate.png",
+    "source": "image(10).png",
+    "crop": [
+      80,
+      24,
+      136,
+      84
+    ],
+    "edge_tiling": "period-aligned crop",
+    "size": [
+      56,
+      60
+    ]
+  },
+  {
+    "file": "roof-teal.png",
+    "source": "image(9).png",
+    "crop": [
+      112,
+      24,
+      176,
+      88
+    ],
+    "edge_tiling": "period-aligned crop",
+    "size": [
+      64,
+      64
+    ]
+  },
+  {
+    "file": "wall-brick.png",
+    "source": "image(8).png",
+    "crop": [
+      16,
+      164,
+      80,
+      176
+    ],
+    "edge_tiling": "period-aligned clean brick strip repeated to a square without rescaling",
+    "size": [
+      64,
+      64
+    ]
+  },
+  {
+    "file": "wall-plaster.png",
+    "source": "image(6).png",
+    "crop": [
+      8,
+      88,
+      48,
+      112
+    ],
+    "edge_tiling": "mirrored",
+    "size": [
+      80,
+      48
+    ]
+  },
+  {
+    "file": "ground-pale-cobble.png",
+    "source": "image(20261124-051837).png",
+    "crop": null,
+    "edge_tiling": "original supplied tile",
+    "size": [
+      384,
+      384
+    ]
+  },
+  {
+    "file": "ground-warm-cobble.png",
+    "source": "image(20261124-051842).png",
+    "crop": null,
+    "edge_tiling": "original supplied tile",
+    "size": [
+      384,
+      384
+    ]
+  },
+  {
+    "file": "ground-grass.png",
+    "source": "image(20261124-051845).png",
+    "crop": null,
+    "edge_tiling": "original supplied tile",
+    "size": [
+      128,
+      128
+    ]
+  },
+  {
+    "file": "ground-thatch.png",
+    "source": "image(20261124-051849).png",
+    "crop": null,
+    "edge_tiling": "original supplied tile",
+    "size": [
+      128,
+      128
+    ]
+  },
+  {
+    "file": "ground-foliage.png",
+    "source": "image(20261124-051852).png",
+    "crop": null,
+    "edge_tiling": "original supplied tile",
+    "size": [
+      384,
+      384
+    ]
+  },
+  {
+    "file": "ground-basalt.png",
+    "source": "image(20261124-051856).png",
+    "crop": null,
+    "edge_tiling": "original supplied tile",
+    "size": [
+      384,
+      384
+    ]
+  },
+  {
+    "file": "ground-wood.png",
+    "source": "image(20261124-051859).png",
+    "crop": null,
+    "edge_tiling": "original supplied tile",
+    "size": [
+      128,
+      128
+    ]
+  }
+]

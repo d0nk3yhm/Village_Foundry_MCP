@@ -1,0 +1,547 @@
+{
+  "format": "village-foundry-source-package",
+  "version": 1,
+  "project": {
+    "name": "village-foundry-mcp",
+    "version": "1.0.0"
+  },
+  "archiveFolder": "village-foundry-mcp",
+  "sourceBytes": 10687095,
+  "fileCount": 73,
+  "scope": "Source entries only; this generated manifest does not hash itself.",
+  "includeRoots": [
+    "README.md",
+    "package.json",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    ".gitignore",
+    ".gitattributes",
+    "LICENSE",
+    "LICENSE.md",
+    "NOTICE",
+    "start-local.cmd",
+    "start-local.command",
+    "dist",
+    "src",
+    "scripts",
+    "tests",
+    "docs/media",
+    "examples/godot"
+  ],
+  "excludedSummary": {
+    "generated Worker bundle": 1
+  },
+  "files": [
+    {
+      "path": ".gitignore",
+      "archivePath": "village-foundry-mcp/.gitignore",
+      "bytes": 154,
+      "sha256": "1e726b8aac825844847f219bd0a5bf9b90ff95cf49eb37a7000be857060b4bcf",
+      "mode": "0644"
+    },
+    {
+      "path": "README.md",
+      "archivePath": "village-foundry-mcp/README.md",
+      "bytes": 27541,
+      "sha256": "6480fb54b756befb669c68b513b0dfc0e6f9ae0be9aa467f5fee812d94855154",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/animation-export.mjs",
+      "archivePath": "village-foundry-mcp/dist/animation-export.mjs",
+      "bytes": 2914,
+      "sha256": "10c2387567b577d1fa02a7c014a5efcf2fa59e31316348392dfb498703afcacc",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/app.js",
+      "archivePath": "village-foundry-mcp/dist/app.js",
+      "bytes": 89456,
+      "sha256": "b0d8bea1011858a70cc075fba4dadd6988d4256ec8ea08e4d511c54c0883eb81",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/ground-basalt.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/ground-basalt.png",
+      "bytes": 52754,
+      "sha256": "6b2e646397c0bddd257638c04dbfd44a6995912c7f13800cb88e4153db523c72",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/ground-foliage.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/ground-foliage.png",
+      "bytes": 61405,
+      "sha256": "23ec58bcf550385f5b347231e21c972ec9c686d85950aee7e396013dbeb53838",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/ground-grass.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/ground-grass.png",
+      "bytes": 1104,
+      "sha256": "53fb4bba68dee74789662471c666de402fae12c71db42a331ec76b0fb5bdb412",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/ground-pale-cobble.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/ground-pale-cobble.png",
+      "bytes": 73975,
+      "sha256": "5f5fe8ee0676dcbc3b2d94b31befeea23db58662dc4ff15770e5d08165760ae3",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/ground-thatch.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/ground-thatch.png",
+      "bytes": 6536,
+      "sha256": "e2e8595a190b38095537c7ce57988aee1ed06c955f5c5c850557bb84cf47e6e6",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/ground-warm-cobble.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/ground-warm-cobble.png",
+      "bytes": 68573,
+      "sha256": "ad03f29312a150d8c081b34504bd792d2068fd1bfe3eb4f9cb6e448e9d0d7f64",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/ground-wood.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/ground-wood.png",
+      "bytes": 1566,
+      "sha256": "378005c9046f7d5c530422e6928cc237beeac6684d6f8aad48f6a16c1caf44bf",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/roof-brown.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/roof-brown.png",
+      "bytes": 353,
+      "sha256": "b23334c9dad6ea02737ddce9dfa02765b784b4347b84eddd6dbcebe735236841",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/roof-slate.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/roof-slate.png",
+      "bytes": 354,
+      "sha256": "6ecb8967d18bb9c1fbbdc998bf110065a0e62cc49ae0d83836769a41114c3397",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/roof-teal.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/roof-teal.png",
+      "bytes": 452,
+      "sha256": "822fc3acc8d57d66ecfccc5d47191769bc7e7c62ee7b5fb64ebed0b46e34471b",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/sources.json",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/sources.json",
+      "bytes": 2441,
+      "sha256": "4232349720587c2933279b7cd12009137cc163e42d39967af29de2b9fe946dde",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/wall-brick.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/wall-brick.png",
+      "bytes": 327,
+      "sha256": "d1b13b0823db7c42f0e52fb89579bec7c027d84bc5f6df374a1a886703b41a30",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/assets/materials/wall-plaster.png",
+      "archivePath": "village-foundry-mcp/dist/assets/materials/wall-plaster.png",
+      "bytes": 352,
+      "sha256": "170d44ce1fd391d6bc55f7ccff4a09bb1bbb60207e886a8382005b6c92fd7b03",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/character-model.mjs",
+      "archivePath": "village-foundry-mcp/dist/character-model.mjs",
+      "bytes": 35062,
+      "sha256": "16067f09edbed0fda475c22dc77f51386c768a349d5d9cc6e9717884f12c5435",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/character-schema.mjs",
+      "archivePath": "village-foundry-mcp/dist/character-schema.mjs",
+      "bytes": 3844,
+      "sha256": "bb6ddc36c5f69d76dee26a9219e56f05327fb111193e956bc717dd3dd3d74a68",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/director.mjs",
+      "archivePath": "village-foundry-mcp/dist/director.mjs",
+      "bytes": 4082,
+      "sha256": "9155ca85808ad9e33841a52dd0f9bfb0a208dbe9eee40d43c35de77d06de26ec",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/fit-sprite.mjs",
+      "archivePath": "village-foundry-mcp/dist/fit-sprite.mjs",
+      "bytes": 7079,
+      "sha256": "e2e6447022d752ee55ab328ed1745f2644391691ecc063e733e432c9757fcb59",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/house-model.mjs",
+      "archivePath": "village-foundry-mcp/dist/house-model.mjs",
+      "bytes": 36311,
+      "sha256": "71bc018275d29c169d2378df775fad380cdf6920240165fa081811963f4cab75",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/house-schema.mjs",
+      "archivePath": "village-foundry-mcp/dist/house-schema.mjs",
+      "bytes": 5376,
+      "sha256": "6ca440ee0dd661478240b8803b550ddd176193eaafc9739c23d55e41a68374ba",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/index.html",
+      "archivePath": "village-foundry-mcp/dist/index.html",
+      "bytes": 39413,
+      "sha256": "e7b1c65f18deb52fcd604695820202791b95e7a8bbef50bbdae70bedd3f1493f",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/interior-floorplan.mjs",
+      "archivePath": "village-foundry-mcp/dist/interior-floorplan.mjs",
+      "bytes": 25146,
+      "sha256": "ff0abbb44c4aa8600303bd95fa1d0aade82eb0ab8deaf9f3c58937b41bcecf1a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/interior-model.mjs",
+      "archivePath": "village-foundry-mcp/dist/interior-model.mjs",
+      "bytes": 23125,
+      "sha256": "cb9934c7f3e2635a8b4c689b075d4a40d6807daa896fe7864020d96454a40ef9",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/interior-schema.mjs",
+      "archivePath": "village-foundry-mcp/dist/interior-schema.mjs",
+      "bytes": 4697,
+      "sha256": "9f26cba0fc5f80c7047ad5179217c99ba8215b3562a2c1e462349c86d5974dc4",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/island-landscape.mjs",
+      "archivePath": "village-foundry-mcp/dist/island-landscape.mjs",
+      "bytes": 18636,
+      "sha256": "685380a15c234c4f0f4914298de6f64b3781fc183837be839a63d8d9e7bc96f7",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/layout-report.mjs",
+      "archivePath": "village-foundry-mcp/dist/layout-report.mjs",
+      "bytes": 2067,
+      "sha256": "7163535d599bb5cc85446ecbddf536bae67ffa6b6e377f3a90a155c186a36c7e",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/map-model.mjs",
+      "archivePath": "village-foundry-mcp/dist/map-model.mjs",
+      "bytes": 53343,
+      "sha256": "e0df758448f2c597663bd5c4743285fec5e98a30f417b1897a4ac616a7e427de",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/map-schema.mjs",
+      "archivePath": "village-foundry-mcp/dist/map-schema.mjs",
+      "bytes": 2702,
+      "sha256": "c8fe10c94910efc8d443a780fd7aced650e9468fdebcf9e2d6b416137112f1e2",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/materials.mjs",
+      "archivePath": "village-foundry-mcp/dist/materials.mjs",
+      "bytes": 12290,
+      "sha256": "2cfb434bf1fd526baa6d56595520ed254ac511d5c1a4c1c74b2f48793b4f0ce4",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/mcp-connection.mjs",
+      "archivePath": "village-foundry-mcp/dist/mcp-connection.mjs",
+      "bytes": 726,
+      "sha256": "c70d11caa6c6a9a63ea431aeb1fe983402fe9e8f51dc8732e8ed8f487264c4c3",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/painted-surfaces.mjs",
+      "archivePath": "village-foundry-mcp/dist/painted-surfaces.mjs",
+      "bytes": 12019,
+      "sha256": "0df6f287c7ebec2cf1a44c1314c19387c7b4e55d2164226aa3c67781bea3817e",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/renderer.mjs",
+      "archivePath": "village-foundry-mcp/dist/renderer.mjs",
+      "bytes": 34513,
+      "sha256": "3d462bd84574b19edbee14d0cd2818de1f19bff65efc3fdbd1f299cc0fe9833a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/software-rasterizer.mjs",
+      "archivePath": "village-foundry-mcp/dist/software-rasterizer.mjs",
+      "bytes": 24506,
+      "sha256": "dac7e2fbdf578114bd123c3f6b4d97548ffab45aba264644fbb67b7f0a38dfa0",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/style.css",
+      "archivePath": "village-foundry-mcp/dist/style.css",
+      "bytes": 56489,
+      "sha256": "2fd37ae8d5792cabf320ab9c2e99357ef10f2c5038f97732e71a7527dbeff45c",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/vendor/THREE_LICENSE.txt",
+      "archivePath": "village-foundry-mcp/dist/vendor/THREE_LICENSE.txt",
+      "bytes": 1081,
+      "sha256": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/vendor/three.core.js",
+      "archivePath": "village-foundry-mcp/dist/vendor/three.core.js",
+      "bytes": 1403455,
+      "sha256": "eb077d2417f61d3e6d9264c317cabc4ea35769ed6b0ab533067292a550784c20",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/vendor/three.module.js",
+      "archivePath": "village-foundry-mcp/dist/vendor/three.module.js",
+      "bytes": 603113,
+      "sha256": "c8211c69345d2e9949dc7a8ac969380497aa0600a5a8ac6a459c8cd02dd9cb8a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/zip.mjs",
+      "archivePath": "village-foundry-mcp/dist/zip.mjs",
+      "bytes": 7261,
+      "sha256": "c9cf712dfdc90457f76b24bd01e1f7adf79d13b37c733529bedf747e9a76dd5b",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/media/character-lineup.png",
+      "archivePath": "village-foundry-mcp/docs/media/character-lineup.png",
+      "bytes": 396809,
+      "sha256": "0f28d53eeebd90664c23025c14128e3459e28157b746da589ff5bfaadfce0def",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/media/character-motion.gif",
+      "archivePath": "village-foundry-mcp/docs/media/character-motion.gif",
+      "bytes": 1242979,
+      "sha256": "f284bf589feae070144c59f91e197eb85cf4dfe2b5df70051baa4855fbabc7af",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/media/hd-zoom-comparison.png",
+      "archivePath": "village-foundry-mcp/docs/media/hd-zoom-comparison.png",
+      "bytes": 608443,
+      "sha256": "f8700df4114e080bedae78d7587cbed60e854419acc1f2990fe9d9f11293e0a6",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/media/house-styles.png",
+      "archivePath": "village-foundry-mcp/docs/media/house-styles.png",
+      "bytes": 364562,
+      "sha256": "e1068349c98be6939b6b3281c67626fb521be0338287fe81177af6436ef0e086",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/media/interior-variations.png",
+      "archivePath": "village-foundry-mcp/docs/media/interior-variations.png",
+      "bytes": 1440264,
+      "sha256": "c50c625a8fbdcca503b47a0663f325a22a13c26601cd26b40917b944f0dfb517",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/media/village-overview.png",
+      "archivePath": "village-foundry-mcp/docs/media/village-overview.png",
+      "bytes": 3562536,
+      "sha256": "d607b9d902322442e39a565e6ffdcf9b1caa26e801bb9499ad1780b1a31a6656",
+      "mode": "0644"
+    },
+    {
+      "path": "examples/godot/.gitignore",
+      "archivePath": "village-foundry-mcp/examples/godot/.gitignore",
+      "bytes": 19,
+      "sha256": "63842c1f40fc0a0260f532de8f1d88e9a6977c07696d3f972accc5ac4d3dec19",
+      "mode": "0644"
+    },
+    {
+      "path": "examples/godot/Main.tscn",
+      "archivePath": "village-foundry-mcp/examples/godot/Main.tscn",
+      "bytes": 191,
+      "sha256": "e07c37c6c14ac4d5dddf1b8dcda7204d196622ec17683b1695557764064076d8",
+      "mode": "0644"
+    },
+    {
+      "path": "examples/godot/README.md",
+      "archivePath": "village-foundry-mcp/examples/godot/README.md",
+      "bytes": 5782,
+      "sha256": "f47675a2bf45fafbfc394cd1a1f36ad080607d0c3f9e14c33128cebde0fcdb76",
+      "mode": "0644"
+    },
+    {
+      "path": "examples/godot/project.godot",
+      "archivePath": "village-foundry-mcp/examples/godot/project.godot",
+      "bytes": 433,
+      "sha256": "e2d26dedef89925683bd9e48382550b9629164bb0e7d9b72f8b3c75f23b0d7a3",
+      "mode": "0644"
+    },
+    {
+      "path": "examples/godot/village_foundry_demo.gd",
+      "archivePath": "village-foundry-mcp/examples/godot/village_foundry_demo.gd",
+      "bytes": 9592,
+      "sha256": "3f7ca71c4093ded011f25c9840af25c919eb22a5583964cb25b20a20f7b38ec7",
+      "mode": "0644"
+    },
+    {
+      "path": "examples/godot/village_foundry_demo.gd.uid",
+      "archivePath": "village-foundry-mcp/examples/godot/village_foundry_demo.gd.uid",
+      "bytes": 20,
+      "sha256": "3d571da1713ea04135bee8b55d2f484632f8d63a70087dd3626b973e4a803797",
+      "mode": "0644"
+    },
+    {
+      "path": "package-lock.json",
+      "archivePath": "village-foundry-mcp/package-lock.json",
+      "bytes": 574,
+      "sha256": "5f4344d9d3aa84caeb5359f5620d4ff6b438bb334c93d26e17f146fa7460c813",
+      "mode": "0644"
+    },
+    {
+      "path": "package.json",
+      "archivePath": "village-foundry-mcp/package.json",
+      "bytes": 627,
+      "sha256": "46803ba5ac96eb60d60213b3ac1308080e16cec1e7045221d6aba962f4328e34",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/build-worker.mjs",
+      "archivePath": "village-foundry-mcp/scripts/build-worker.mjs",
+      "bytes": 5844,
+      "sha256": "64e119cbb5617bff02c5e53e5beb7ed3e0c74a62dfba05d6673a51ed6fccb60c",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/export-character-demo.mjs",
+      "archivePath": "village-foundry-mcp/scripts/export-character-demo.mjs",
+      "bytes": 4269,
+      "sha256": "23463e23373da430ff00680d435df49d69562bb8b2a4c04f2ed744a88ce8052a",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/export-island-example.mjs",
+      "archivePath": "village-foundry-mcp/scripts/export-island-example.mjs",
+      "bytes": 8217,
+      "sha256": "b85b87fdce8acf32746b0977a629631fcce9d9d60fbe5c849cb893552da6b943",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/local-server.mjs",
+      "archivePath": "village-foundry-mcp/scripts/local-server.mjs",
+      "bytes": 11360,
+      "sha256": "22bc99f6eb6e525e9c0a5da785c23821413480d7aaf0217be0c08a74b862557c",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/local-storage.mjs",
+      "archivePath": "village-foundry-mcp/scripts/local-storage.mjs",
+      "bytes": 5981,
+      "sha256": "2929afea77ef1f4e75a15eae6f3019265a8ea595e156368fe0fb95c7b3930bc9",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/package-project.mjs",
+      "archivePath": "village-foundry-mcp/scripts/package-project.mjs",
+      "bytes": 17708,
+      "sha256": "d9fda57ab8e07a78e964c6271e59a415937ffb35494e2cc54fddc664f1ca93ba",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/verify-assets.mjs",
+      "archivePath": "village-foundry-mcp/scripts/verify-assets.mjs",
+      "bytes": 11184,
+      "sha256": "921e234c0f5ea26a3e94efc263698eb781582cc3fdae04c96ab0bb04a9ad51ba",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/verify-maps.mjs",
+      "archivePath": "village-foundry-mcp/scripts/verify-maps.mjs",
+      "bytes": 4802,
+      "sha256": "79c45eebc36b74d2164a407bfdc9f9863f784b7c31e5f8eb1876db064087c94e",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/verify-preview-detail.mjs",
+      "archivePath": "village-foundry-mcp/scripts/verify-preview-detail.mjs",
+      "bytes": 8403,
+      "sha256": "31177500d7c0f3903885ed75427900ef0e7a26a111de0e341eed70e9c7e2f96d",
+      "mode": "0644"
+    },
+    {
+      "path": "src/worker.mjs",
+      "archivePath": "village-foundry-mcp/src/worker.mjs",
+      "bytes": 63156,
+      "sha256": "208f15b73f60f84b8e25662e0a57104eec8257d4200cd0c3b5c1651a6e03f05d",
+      "mode": "0644"
+    },
+    {
+      "path": "start-local.cmd",
+      "archivePath": "village-foundry-mcp/start-local.cmd",
+      "bytes": 441,
+      "sha256": "a2e6e3e808977741be2c66e993c3c052abc1e88ed69ee949aa4a580773b01c5f",
+      "mode": "0644"
+    },
+    {
+      "path": "start-local.command",
+      "archivePath": "village-foundry-mcp/start-local.command",
+      "bytes": 668,
+      "sha256": "1de27d14d697301279cd763dfce43c4d538487d368d7d48d1817d7277436b02c",
+      "mode": "0755"
+    },
+    {
+      "path": "tests/app-state.test.mjs",
+      "archivePath": "village-foundry-mcp/tests/app-state.test.mjs",
+      "bytes": 8520,
+      "sha256": "4c3303daaf2821d7bee96914e9d77705faaf78023ffc0a190d409f1fb28ece4f",
+      "mode": "0644"
+    },
+    {
+      "path": "tests/local-server.test.mjs",
+      "archivePath": "village-foundry-mcp/tests/local-server.test.mjs",
+      "bytes": 8811,
+      "sha256": "3d581ae9df29a881654025093e42a9ba014eff55c68bc783361a0ff4a4cc1867",
+      "mode": "0644"
+    },
+    {
+      "path": "tests/mcp-connection.test.mjs",
+      "archivePath": "village-foundry-mcp/tests/mcp-connection.test.mjs",
+      "bytes": 9161,
+      "sha256": "ee99562c0625293e2052414ad1fe0a722e4d5ee9174f0b8ed0edc07c296b8f9d",
+      "mode": "0644"
+    },
+    {
+      "path": "tests/package-project.test.mjs",
+      "archivePath": "village-foundry-mcp/tests/package-project.test.mjs",
+      "bytes": 6486,
+      "sha256": "71eff1f51c348e035add98627cfb7e58fa91f35d37c6ae960e28844e5cf6bc0d",
+      "mode": "0644"
+    },
+    {
+      "path": "tests/preview-zoom.test.mjs",
+      "archivePath": "village-foundry-mcp/tests/preview-zoom.test.mjs",
+      "bytes": 10760,
+      "sha256": "23b958dfa8d2c4f78b751f3c212b1f21b800fc5aaa1bda4673e826806a0d3321",
+      "mode": "0644"
+    },
+    {
+      "path": "tests/worker.test.mjs",
+      "archivePath": "village-foundry-mcp/tests/worker.test.mjs",
+      "bytes": 61900,
+      "sha256": "3d73b278b7d3ce7292c005800d429c661352dc2f35eaaf7c9f945ec660368e76",
+      "mode": "0644"
+    }
+  ]
+}

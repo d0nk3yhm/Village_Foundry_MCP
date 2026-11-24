@@ -1,0 +1,16 @@
+node_modules/
+.openai/
+.godot/
+.village-foundry/
+local-data/
+qa/
+artifacts/
+release/
+dist/server/
+*.zip
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
+Desktop.ini

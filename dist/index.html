@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#13181e">
+  <meta name="description" content="Generate illustrated houses, furnished interiors and village maps from geometry. Explore templates and materials, then export individual sprites or a whole batch of transparent PNGs.">
+  <title>Village Foundry MCP — Illustrated worlds, built with code</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M5 10v11h14V10M9 21v-7h6v7"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 1 7M3 4v6h6"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7Zm-9 5 9 5 9-5M12 12v10m-5-17 10 5"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 16 5-5 5 5 3-3 5 5"/><circle cx="15.5" cy="8.5" r="1.5"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2.5 0 4.5-3 6-6m2-4c1.2-1.2 2.5-2 4-2h3m-4-4 4 4-4 4"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 5 7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H5v20h14V7Zm0 0v6h5M8 13h8m-8 4h5"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M20 8A8 8 0 0 0 5 6L2 9m0-6v6h6m-4 7a8 8 0 0 0 15 2l3-3m0 6v-6h-6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 2-2c0-1-1-1.5-1-2.5s1-1.5 2-1.5h2a3 3 0 0 0 3-3 9 9 0 0 0-9-9Z"/><path d="M7 10h.01M10 6h.01M15 7h.01M18 11h.01" stroke-width="3"/></symbol>
+  </svg>
+
+  <header class="app-header">
+    <a class="brand" href="./" aria-label="Village Foundry MCP home">
+      <span class="brand-mark" aria-hidden="true"><svg class="icon"><use href="#i-house"/></svg></span>
+      <span class="brand-copy"><strong>Village Foundry MCP<span class="brand-dot">.</span></strong><span>Illustrated worlds, built with code</span></span>
+    </a>
+    <div class="header-actions">
+      <span class="local-badge"><span class="status-dot"></span> Made in your browser</span>
+      <button class="button button-quiet" id="load-recipe-btn" type="button"><svg class="icon"><use href="#i-upload"/></svg><span>Load recipe</span></button>
+      <button class="button button-secondary" id="save-recipe-btn" type="button"><svg class="icon"><use href="#i-file"/></svg><span>Save recipe</span></button>
+      <input class="visually-hidden" id="load-recipe-input" type="file" accept=".json,application/json" aria-label="Load a Village Foundry recipe" tabindex="-1">
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="settings-panel panel" aria-label="Scene controls">
+      <div class="settings-heading"><div><span class="eyebrow">YOUR BUILD</span><h1>Build a village house</h1></div><button class="icon-button" id="reset-btn" type="button" title="Reset house settings" aria-label="Reset scene settings"><svg class="icon"><use href="#i-reset"/></svg></button></div>
+
+      <div id="exterior-controls">
+      <section class="control-section preset-section">
+        <label class="field-label" for="preset">House template</label>
+        <select id="preset">
+          <option value="village" selected>Village house</option>
+          <option value="source">Red-roof townhouse</option>
+          <option value="cottage">Little cottage</option>
+          <option value="inn">Village inn</option>
+          <option value="manor">Timber manor</option>
+        </select>
+        <div class="preset-cards" id="preset-cards" aria-label="Quick house presets">
+          <button class="preset-card active" data-preset="village" aria-pressed="true" type="button"><span class="mini-house village-house" aria-hidden="true"><i></i></span><span>Village</span></button>
+          <button class="preset-card" data-preset="cottage" aria-pressed="false" type="button"><span class="mini-house cottage-house" aria-hidden="true"><i></i></span><span>Cottage</span></button>
+          <button class="preset-card" data-preset="inn" aria-pressed="false" type="button"><span class="mini-house inn-house" aria-hidden="true"><i></i></span><span>Inn</span></button>
+        </div>
+      </section>
+
+      <details class="control-section disclosure" open>
+        <summary><span><svg class="icon"><use href="#i-cube"/></svg> Structure</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+        <div class="disclosure-body">
+          <div class="range-field"><div class="field-heading"><label for="width">Width</label><output id="width-value" for="width">4.8</output></div><input id="width" type="range" min="3" max="8" step="0.1" value="4.8"></div>
+          <div class="range-field"><div class="field-heading"><label for="depth">Depth</label><output id="depth-value" for="depth">6.0</output></div><input id="depth" type="range" min="3" max="10" step="0.1" value="6"></div>
+          <div class="field-inline"><label for="floors">Floors</label><select id="floors"><option value="1">1 floor</option><option value="2" selected>2 floors</option><option value="3">3 floors</option></select></div>
+          <div class="range-field"><div class="field-heading"><label for="floor-height">Wall height per floor</label><output id="floor-height-value" for="floor-height">1.80</output></div><input id="floor-height" type="range" min="1.45" max="2.25" step="0.05" value="1.8"></div>
+          <div class="range-field"><div class="field-heading"><label for="roof-pitch">Roof pitch</label><output id="roof-pitch-value" for="roof-pitch">45°</output></div><input id="roof-pitch" type="range" min="25" max="65" step="1" value="45"></div>
+        </div>
+      </details>
+
+      <details class="control-section disclosure" open>
+        <summary><span><svg class="icon"><use href="#i-house"/></svg> Little details</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+        <div class="disclosure-body">
+          <div class="toggle-grid">
+            <label class="toggle-option"><input id="chimney" type="checkbox" checked><span>Chimney</span></label>
+            <label class="toggle-option"><input id="dormer" type="checkbox" checked><span>Dormer</span></label>
+            <label class="toggle-option"><input id="porch" type="checkbox" checked><span>Porch</span></label>
+            <label class="toggle-option"><input id="shutters" type="checkbox" checked><span>Shutters</span></label>
+            <label class="toggle-option"><input id="planters" type="checkbox" checked><span>Planters</span></label>
+            <label class="toggle-option"><input id="side-wing" type="checkbox"><span>Side wing</span></label>
+            <label class="toggle-option toggle-wide"><input id="timber" type="checkbox" checked><span>Timber framing</span></label>
+          </div>
+          <div class="field-inline"><label for="ground">Ground preview</label><select id="ground"><option value="none" selected>None · transparent</option><option value="pale_cobble">Pale cobblestone</option><option value="warm_cobble">Warm cobblestone</option><option value="grass">Grass</option><option value="basalt">Basalt</option></select></div>
+          <p class="helper ground-helper">House PNGs export without ground.</p>
+        </div>
+      </details>
+      </div>
+
+      <div id="interior-controls" hidden>
+        <section class="control-section preset-section">
+          <label class="field-label" for="room-preset">Building use</label>
+          <select id="room-preset"><option value="tavern" selected>Village tavern</option><option value="cottage">Family cottage</option><option value="inn">Village inn</option><option value="workshop">Artisan workshop</option></select>
+          <p class="helper room-template-helper">Generate connected rooms for each floor, with furnishings suited to their purpose.</p>
+        </section>
+        <details class="control-section disclosure" open>
+          <summary><span><svg class="icon"><use href="#i-cube"/></svg> Floor plan settings</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+          <div class="disclosure-body">
+            <div class="range-field"><div class="field-heading"><label for="room-width">Width</label><output id="room-width-value" for="room-width">10.0</output></div><input id="room-width" type="range" min="6" max="20" step="0.1" value="10"></div>
+            <div class="range-field"><div class="field-heading"><label for="room-depth">Depth</label><output id="room-depth-value" for="room-depth">9.0</output></div><input id="room-depth" type="range" min="6" max="20" step="0.1" value="9"></div>
+            <div class="range-field"><div class="field-heading"><label for="room-tables">Tables</label><output id="room-tables-value" for="room-tables">4</output></div><input id="room-tables" type="range" min="0" max="12" step="1" value="4"></div>
+            <div class="field-inline"><label for="bar-side">Bar position</label><select id="bar-side"><option value="back" selected>Back wall</option><option value="left">Left wall</option><option value="right">Right wall</option></select></div>
+            <div class="field-inline"><label for="room-floor-count">Building floors</label><select id="room-floor-count"><option value="1">1 floor</option><option value="2">2 floors</option><option value="3">3 floors</option></select></div>
+            <div class="field-inline"><label for="room-floor-index">View floor</label><select id="room-floor-index"><option value="0">Ground floor</option><option value="1">Upper floor 1</option><option value="2">Upper floor 2</option></select></div>
+            <div class="field-inline"><label for="room-layout-variant">Floor plan</label><select id="room-layout-variant"><option value="auto">From variation seed</option><option value="0">Plan 1</option><option value="1">Plan 2</option><option value="2">Plan 3</option><option value="3">Plan 4</option><option value="4">Plan 5</option><option value="5">Plan 6</option></select></div>
+            <div class="range-field"><div class="field-heading"><label for="room-bedrooms">Bedrooms</label><output id="room-bedrooms-value">2</output></div><input id="room-bedrooms" type="range" min="0" max="6" step="1" value="2"></div>
+          </div>
+        </details>
+        <details class="control-section disclosure" open>
+          <summary><span><svg class="icon"><use href="#i-house"/></svg> Furnish this floor</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+          <div class="disclosure-body">
+            <div class="toggle-grid room-toggle-grid">
+              <label class="toggle-option"><input id="room-fireplace" type="checkbox" checked><span>Fireplace</span></label>
+              <label class="toggle-option"><input id="room-shelves" type="checkbox" checked><span>Shelves</span></label>
+              <label class="toggle-option"><input id="room-barrels" type="checkbox" checked><span>Barrels</span></label>
+              <label class="toggle-option"><input id="room-rug" type="checkbox" checked><span>Rug</span></label>
+              <label class="toggle-option"><input id="room-kitchen" type="checkbox" checked><span>Kitchen</span></label>
+              <label class="toggle-option"><input id="room-bar" type="checkbox" checked><span>Public bar</span></label>
+              <label class="toggle-option"><input id="room-stairs" type="checkbox" checked><span>Stairs</span></label>
+              <label class="toggle-option toggle-wide"><input id="room-occupants" type="checkbox"><span>Add residents &amp; patrons</span></label>
+              <label class="toggle-option toggle-wide"><input id="room-clear-center" type="checkbox" checked><span>Keep a central aisle</span></label>
+            </div>
+            <p class="helper" id="room-service-note" hidden>Kitchen, public bar and hearth settings apply to the ground floor.</p>
+          </div>
+        </details>
+      </div>
+
+      <div id="map-controls" hidden>
+        <section class="control-section preset-section">
+          <label class="field-label" for="map-preset">Map template</label>
+          <select id="map-preset"><option value="village">Island village</option><option value="crossroads">Island market town</option><option value="riverside">River settlement</option><option value="farm">Country farmsteads</option></select>
+          <p class="helper">A whole landscape, with winding routes, varied plots and connected interiors.</p>
+        </section>
+        <details class="control-section disclosure" open><summary><span>Landscape &amp; layout</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary><div class="disclosure-body">
+          <div class="field-inline"><label for="map-landform">Land shape</label><select id="map-landform"><option value="island">Organic island</option><option value="mainland">Mainland region</option></select></div>
+          <div class="map-size-control"><label class="field-label" for="map-size-preset">Map size</label><select id="map-size-preset"><option value="48">Small · 48 × 48</option><option value="80" selected>Medium · 80 × 80</option><option value="128">Large · 128 × 128</option><option value="192">Huge · 192 × 192</option><option value="custom">Custom dimensions</option></select></div>
+          <div class="map-size-fields">
+            <label for="map-width">Map width<input id="map-width" type="number" min="24" max="256" step="1" value="80"></label>
+            <label for="map-depth">Map height<input id="map-depth" type="number" min="24" max="256" step="1" value="80"></label>
+          </div>
+          <p class="helper" id="map-size-summary">80 × 80 world units. Set exported pixels in PNG canvas below.</p>
+          <div class="range-field"><div class="field-heading"><label for="map-house-count">Buildings</label><output id="map-house-count-value">10</output></div><input id="map-house-count" type="range" min="0" max="32" step="1" value="10"></div>
+          <div class="field-inline"><label for="map-house-preset">Building mix</label><select id="map-house-preset"><option value="mixed">Mixed village</option><option value="village">Merchant houses</option><option value="cottage">Cottages</option><option value="inn">Inns</option><option value="manor">Guild manors</option><option value="source">Stone houses</option></select></div>
+          <div class="field-inline"><label for="map-road-style">Road surface</label><select id="map-road-style"><option value="dirt">Warm earth</option><option value="cobble">Cobblestone</option></select></div>
+          <div class="toggle-grid">
+            <label class="toggle-option"><input id="map-houses" type="checkbox" checked><span>Houses</span></label>
+            <label class="toggle-option"><input id="map-roads" type="checkbox" checked><span>Roads</span></label>
+            <label class="toggle-option"><input id="map-fences" type="checkbox" checked><span>Fences</span></label>
+            <label class="toggle-option"><input id="map-trees" type="checkbox" checked><span>Trees</span></label>
+            <label class="toggle-option"><input id="map-water" type="checkbox"><span>River</span></label>
+            <label class="toggle-option"><input id="map-gardens" type="checkbox"><span>Gardens</span></label>
+            <label class="toggle-option toggle-wide"><input id="map-sea" type="checkbox" checked><span>Surrounding sea</span></label>
+          </div>
+          <p class="helper">Turn off the surrounding sea to export the island with transparent space around its shoreline.</p>
+          <p class="helper" id="map-layout-status">Entrances connect to paths. Buildings keep their own editable recipes.</p>
+        </div></details>
+        <section class="control-section"><label class="toggle-option"><input id="map-interiors" type="checkbox" checked><span>Include interiors in bundle</span></label><p class="helper">Each building links to furnished floor plans, using its footprint, number of floors and aligned stairs.</p></section>
+      </div>
+
+      <div id="character-controls" hidden>
+        <section class="control-section preset-section">
+          <label class="field-label" for="character-preset">Character template</label>
+          <select id="character-preset"><option value="innkeeper">The innkeeper</option><option value="ranger">Woodland ranger</option><option value="villager">Village artisan</option><option value="blacksmith">The blacksmith</option></select>
+          <p class="helper">Women, men, girls and boys, with editable hair, clothing and repeatable appearances.</p>
+        </section>
+        <details class="control-section disclosure" open><summary><span>Appearance &amp; clothing</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary><div class="disclosure-body">
+          <div class="field-inline"><label for="character-build">Build</label><select id="character-build"><option value="slim">Slender</option><option value="average">Average</option><option value="sturdy">Sturdy</option></select></div>
+          <div class="range-field"><div class="field-heading"><label for="character-height">Height</label><output id="character-height-value">1.75</output></div><input id="character-height" type="range" min="1.05" max="2" step="0.01" value="1.75"></div>
+          <div class="field-inline"><label for="character-hair">Hair</label><select id="character-hair"><option value="short">Short</option><option value="swept">Swept</option><option value="bob">Bob</option><option value="braid">Braided</option></select></div>
+          <div class="field-inline"><label for="character-beard">Facial hair</label><select id="character-beard"><option value="none">None</option><option value="stubble">Stubble</option><option value="short">Short beard</option></select></div>
+          <div class="character-colours">
+            <label class="tint-control"><input type="color" id="character-skin-color" value="#ba8965"><span>Skin</span></label>
+            <label class="tint-control"><input type="color" id="character-hair-color" value="#59402f"><span>Hair</span></label>
+            <label class="tint-control"><input type="color" id="character-tunic-color" value="#587361"><span>Cloth</span></label>
+            <label class="tint-control"><input type="color" id="character-trouser-color" value="#655b4b"><span>Trousers</span></label>
+            <label class="tint-control"><input type="color" id="character-leather-color" value="#72513a"><span>Leather</span></label>
+            <label class="tint-control"><input type="color" id="character-accent-color" value="#d4bc83"><span>Trim</span></label>
+          </div>
+        </div></details>
+        <details class="control-section disclosure" open><summary><span>Pose &amp; expression</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary><div class="disclosure-body">
+          <div class="field-inline"><label for="character-animation">Action</label><select id="character-animation"><option value="idle">Idle</option><option value="walk">Walk</option><option value="talk">Talk</option><option value="drink">Drink</option><option value="point">Point</option><option value="wave">Wave</option></select></div>
+          <div class="field-inline"><label for="character-mouth">Mouth</label><select id="character-mouth"><option value="auto">Follow action</option><option value="closed">Closed</option><option value="open">Open</option><option value="wide">Wide</option></select></div>
+          <div class="range-field"><div class="field-heading"><label for="character-direction">Facing</label><output id="character-direction-value">0°</output></div><input id="character-direction" type="range" min="0" max="360" step="45" value="0"></div>
+        </div></details>
+      </div>
+
+      <details class="control-section disclosure">
+        <summary><span><svg class="icon"><use href="#i-image"/></svg> Reference image</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+        <div class="disclosure-body">
+          <div id="reference-drop" class="reference-drop">
+            <canvas id="reference-canvas" width="192" height="128" aria-label="Current reference image" hidden></canvas>
+            <button class="button button-secondary button-full" id="upload-btn" type="button"><svg class="icon"><use href="#i-upload"/></svg>Add reference</button>
+            <input id="file-input" class="visually-hidden" type="file" accept="image/*" aria-label="Choose a reference image" tabindex="-1">
+          </div>
+          <p id="reference-note" class="helper">Choose or drop your own image to sample its colours.</p>
+          <button id="sample-palette-btn" class="button button-secondary button-full" type="button" disabled><svg class="icon"><use href="#i-palette"/></svg>Use image colours</button>
+        </div>
+      </details>
+
+      <div class="control-section variation-section">
+        <div class="field-heading"><label for="seed">Variation seed</label><span class="field-hint">Repeatable</span></div>
+        <div class="seed-control"><input id="seed" type="number" min="0" max="2147483647" step="1" value="742" aria-label="Variation seed"><span class="helper seed-helper">Same seed,<br>same scene.</span></div>
+      </div>
+      <div class="settings-footer"><svg class="icon"><use href="#i-lock"/></svg><span>Reference images stay in your browser.</span></div>
+    </aside>
+
+    <main class="workspace-main">
+      <section class="preview-panel panel" aria-labelledby="preview-heading">
+        <div class="workspace-mode" role="group" aria-label="Scene type"><button id="mode-exterior" class="active" type="button" aria-pressed="true"><svg class="icon"><use href="#i-house"/></svg>Houses</button><button id="mode-interior" type="button" aria-pressed="false"><svg class="icon"><use href="#i-cube"/></svg>Interiors</button><button id="mode-map" type="button" aria-pressed="false"><svg class="icon"><use href="#i-image"/></svg>Map maker</button><button id="mode-character" type="button" aria-pressed="false">Characters</button></div>
+        <div class="panel-heading preview-heading"><div><span class="eyebrow">THE WORKBENCH</span><h2 id="preview-heading">Your next village house</h2><p>Built from geometry <span aria-hidden="true">·</span> Orthographic render</p></div><div class="preview-header-actions"><span class="render-badge"><span class="status-dot"></span> LIVE</span><button id="variation-btn" class="button button-primary" type="button"><svg class="icon"><use href="#i-shuffle"/></svg>Generate variation</button></div></div>
+        <div class="art-style-bar"><span class="field-label">Art style</span><div class="segmented-control" role="group" aria-label="Art style"><button id="style-illustrated" class="active" type="button" aria-pressed="true">Illustrated 2D</button><button id="style-pixel" type="button" aria-pressed="false">Pixel art</button></div><span class="helper">Same world. Two finishes.</span></div>
+        <div class="view-toolbar">
+          <div class="segmented-control" aria-label="Camera view"><button id="view-rpg" class="active" type="button" aria-pressed="true">RPG view</button><button id="view-top" type="button" aria-pressed="false">Top down</button><button id="view-front" type="button" aria-pressed="false">Front</button></div>
+          <div class="view-tools"><div class="preview-zoom" role="group" aria-label="Preview zoom"><button id="zoom-out-btn" type="button" aria-label="Zoom out" title="Zoom out">−</button><output id="preview-zoom-value" aria-label="Preview magnification">100%</output><button id="zoom-in-btn" type="button" aria-label="Zoom in" title="Zoom in">+</button><button id="zoom-fit-btn" type="button" aria-label="Fit preview" title="Fit the whole scene">Fit</button></div><button id="spin-btn" class="icon-button" type="button" aria-pressed="false" title="Rotate the preview" aria-label="Rotate the preview"><svg class="icon"><use href="#i-rotate"/></svg></button><label class="visually-hidden" for="checker">Preview background</label><select id="checker"><option value="light" selected>Light grid</option><option value="dark">Dark grid</option></select></div>
+        </div>
+        <p id="preview-detail-status" class="preview-detail-status" role="status" aria-live="polite">Geometry detail updates when navigation pauses.</p>
+        <div id="viewport" class="viewport" data-checker="light">
+          <canvas id="render-canvas" width="768" height="576" tabindex="0" aria-label="Interactive orthographic asset preview" aria-describedby="preview-help"></canvas>
+          <span class="stage-corner stage-corner-tl" aria-hidden="true"></span><span class="stage-corner stage-corner-tr" aria-hidden="true"></span><span class="stage-corner stage-corner-bl" aria-hidden="true"></span><span class="stage-corner stage-corner-br" aria-hidden="true"></span>
+          <div class="stage-caption"><span class="stage-indicator"></span><span id="stage-meta">Building your house…</span></div>
+        </div>
+        <p class="preview-help" id="preview-help">Scroll to zoom · Drag to rotate · Shift + drag to pan · Fit to see the whole scene</p>
+        <div class="camera-strip">
+          <div class="range-field"><div class="field-heading"><label for="elevation">Elevation</label><output id="elevation-value" for="elevation">45°</output></div><input id="elevation" type="range" min="0" max="90" step="1" value="45"></div>
+          <div class="range-field"><div class="field-heading"><label for="azimuth">Rotation</label><output id="azimuth-value" for="azimuth">0°</output></div><input id="azimuth" type="range" min="-180" max="180" step="1" value="0"></div>
+        </div>
+        <div class="export-strip">
+          <div class="export-options"><div class="compact-field"><label for="resolution">Detail resolution</label><select id="resolution"><option value="128">128 px</option><option value="192">192 px</option><option value="256">256 px</option><option value="384">384 px</option><option value="512" selected>512 px</option><option value="768">768 px</option><option value="1024">1024 px</option><option value="2048">2048 px · HD</option><option value="4096">4096 px · master</option></select></div><div class="compact-field"><label for="pixel-scale">Export scale</label><select id="pixel-scale"><option value="1">1×</option><option value="2" selected>2×</option><option value="3">3×</option><option value="4">4×</option></select></div></div>
+          <div class="export-actions"><button class="button button-secondary" id="export-views-btn" type="button" disabled>Export 4 views</button><button class="button button-primary" id="download-btn" type="button" disabled><svg class="icon"><use href="#i-download"/></svg>Export this house</button></div>
+        </div>
+        <div class="canvas-sizing">
+          <div class="field-inline"><label for="output-size-mode">PNG canvas</label><select id="output-size-mode"><option value="auto">Automatic size</option><option value="fixed">Exact width × height</option></select></div>
+          <div id="fixed-size-fields" class="fixed-size-fields" hidden>
+            <div class="compact-field"><label for="output-width">Width · px</label><input id="output-width" type="number" min="16" max="8192" step="1" value="512"></div>
+            <div class="compact-field"><label for="output-height">Height · px</label><input id="output-height" type="number" min="16" max="8192" step="1" value="512"></div>
+            <div class="compact-field"><label for="output-padding">Padding · px</label><input id="output-padding" type="number" min="0" max="128" step="1" value="8"></div>
+            <div class="compact-field"><label for="output-fit">Fit inside canvas</label><select id="output-fit"><option value="contain">Fit whole asset</option><option value="pad">Keep current scale</option></select></div>
+          </div>
+          <p id="output-size-note" class="helper" hidden>Transparent padding preserves proportions. Pixel art stays on a crisp pixel grid. For animations, these dimensions apply to each frame.</p>
+        </div>
+        <div class="secondary-exports"><button id="bundle-cancel-btn" class="button button-secondary" type="button" hidden>Cancel export</button><button id="export-both-btn" class="button button-secondary" type="button">Export both styles</button><button id="map-bundle-btn" class="button button-primary" type="button" hidden>Export village bundle</button></div>
+        <div class="render-options"><div class="inline-toggles"><label class="toggle-option" hidden><input id="pixelated" type="checkbox"><span>Crisp edges</span></label><label class="toggle-option"><input id="outline" type="checkbox" checked><span>Outline</span></label><label class="toggle-option"><input id="shadow" type="checkbox" checked><span>Shadow</span></label></div><span class="export-hint">Transparent background</span></div>
+        <p class="export-note">Trimmed PNGs; consistent scale across the batch.</p>
+      </section>
+
+      <section id="character-animation-panel" class="panel animation-panel" hidden>
+        <div class="panel-heading"><div><span class="eyebrow">BRING THEM TO LIFE</span><h2>Movement &amp; sprite sheets</h2><p class="helper">A consistent character, camera and ground anchor in every frame.</p></div><button id="character-play" class="button button-secondary" type="button" aria-pressed="false">Play animation</button></div>
+        <div class="animation-timeline"><label for="character-phase">Animation phase</label><input id="character-phase" type="range" min="0" max="1" step="0.01" value="0"><output id="character-phase-value">0%</output></div>
+        <div class="animation-export-options">
+          <div class="compact-field"><label for="animation-detail">Frame detail</label><select id="animation-detail"><option value="128">128</option><option value="192">192</option><option value="256" selected>256</option><option value="384">384</option><option value="512">512</option></select></div>
+          <div class="compact-field"><label for="animation-frames">Frames per action</label><select id="animation-frames"><option value="4">4</option><option value="8" selected>8</option><option value="12">12</option><option value="16">16</option><option value="24">24</option></select></div>
+          <div class="compact-field"><label for="animation-directions">Directions</label><select id="animation-directions"><option value="1">Current facing</option><option value="4" selected>4 directions</option><option value="8">8 directions</option></select></div>
+          <div class="compact-field"><label for="animation-style">Export style</label><select id="animation-style"><option value="current">Current preview</option><option value="illustrated">Illustrated 2D</option><option value="pixel">Pixel art</option><option value="both">Both styles</option></select></div>
+        </div>
+        <div class="animation-actions"><button id="character-reference-btn" class="button button-secondary" type="button">Export reference sheet</button><button id="animation-export-btn" class="button button-primary" type="button">Export this animation</button><button id="animation-all-btn" class="button button-secondary" type="button">Export all six actions</button><button id="animation-cancel-btn" class="button button-secondary" type="button" hidden>Cancel</button></div>
+        <p id="animation-status" class="helper" role="status">ZIP includes a transparent sprite sheet, individual PNG frames, the character recipe and frame metadata.</p>
+      </section>
+
+      <details id="interior-director" class="director-panel panel" hidden>
+        <summary><span><span class="eyebrow">ROOM DIRECTOR</span><strong>Describe your layout</strong></span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+        <div class="director-body">
+          <label class="field-label" for="room-brief">What belongs in this room?</label>
+          <textarea id="room-brief" rows="3" placeholder="A warm tavern with a kitchen, four tables, two floors, three bedrooms upstairs and a clear entrance."></textarea>
+          <div class="director-actions"><p class="helper">Briefs use simple placement rules. MCP can edit the precise scene recipe.</p><button id="apply-brief" class="button button-primary" type="button">Apply layout brief</button></div>
+          <p id="director-status" class="director-status" role="status" aria-live="polite">Try a room type, table count, bar position, and the features you want.</p>
+        </div>
+      </details>
+
+      <section id="batch-panel" class="batch-panel panel" aria-labelledby="batch-heading">
+        <div class="panel-heading batch-heading"><div><span class="eyebrow">GROW YOUR WORLD</span><h2 id="batch-heading">Generate a whole village</h2><p class="helper">One style. Hundreds of little differences.</p></div><span class="batch-badge">BATCH EXPORT</span></div>
+        <div class="batch-controls">
+          <div class="compact-field batch-count-field"><label for="batch-count">Number of houses</label><input id="batch-count" type="number" min="1" max="500" step="1" value="100"></div>
+          <div class="compact-field batch-template-field"><label for="batch-template">Template mix</label><select id="batch-template"><option value="mixed" selected>Mixed village</option><option value="village">Village houses</option><option value="cottage">Little cottages</option><option value="inn">Village inns</option><option value="manor">Timber manors</option><option value="source">Red-roof townhouses</option></select></div>
+          <div class="range-field batch-strength-field"><div class="field-heading"><label for="variation-strength">Variation</label><output id="variation-strength-value" for="variation-strength">65%</output></div><input id="variation-strength" type="range" min="0" max="100" step="1" value="65"><div class="range-end-labels"><span>Subtle</span><span>Adventurous</span></div></div>
+        </div>
+        <div class="batch-style-row"><label for="batch-style">Export style</label><select id="batch-style"><option value="current">Current preview style</option><option value="illustrated">Illustrated 2D</option><option value="pixel">Pixel art</option><option value="both">Both styles</option></select></div><div class="batch-bottom"><div class="batch-description"><span class="batch-format">PNG + RECIPES</span><p>Seeded variations, packed into one ZIP.</p></div><div class="batch-actions"><button id="batch-cancel-btn" class="button button-secondary" type="button" hidden>Cancel</button><button id="batch-btn" class="button button-primary" type="button"><svg class="icon"><use href="#i-download"/></svg>Export 100 houses</button></div></div>
+        <div class="batch-progress-wrap"><progress id="batch-progress" max="100" value="0" aria-label="House batch export progress" hidden></progress><p id="batch-status" role="status" aria-live="polite">Every asset gets a recipe you can load and edit.</p></div>
+      </section>
+
+      <section class="materials-panel panel" aria-labelledby="materials-heading">
+        <div class="panel-heading materials-heading"><div><span class="eyebrow">SURFACE & COLOUR</span><h2 id="materials-heading">Material library</h2></div><button id="export-material-btn" class="button button-quiet" type="button"><svg class="icon"><use href="#i-download"/></svg><span>Export material</span></button></div>
+        <div class="material-toolbar"><div class="material-tabs" role="tablist" aria-label="Material surface"><button class="active" type="button" data-material-tab="roof" role="tab" aria-selected="true">Roof</button><button type="button" data-material-tab="wall" role="tab" aria-selected="false">Walls</button><button type="button" data-material-tab="wood" role="tab" aria-selected="false">Timber</button><button type="button" data-material-tab="ground" role="tab" aria-selected="false">Ground</button></div><span class="material-hint">Click a finish to apply it</span></div>
+        <div id="material-grid" class="material-grid" aria-label="Available material finishes"><div class="material-placeholder"><span></span><span></span><span></span><span></span></div></div>
+        <div class="material-bottom"><p id="material-info" class="helper">Choose a finish, then make the colours your own.</p><div class="tint-controls"><label class="tint-control" for="roof-color"><input id="roof-color" type="color" value="#70747b"><span>Roof tint</span></label><label class="tint-control" for="wall-color"><input id="wall-color" type="color" value="#d9c6a5"><span>Wall tint</span></label><label class="tint-control" for="wood-color"><input id="wood-color" type="color" value="#5c4533"><span>Timber tint</span></label></div></div>
+      </section>
+      <details id="mcp-panel" class="mcp-panel panel">
+        <summary><span><span class="eyebrow">CONNECTED SCENE CONTROL</span><strong>MCP scene controls</strong></span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+        <div class="mcp-body">
+          <p id="mcp-connection-note" class="helper">Load a scene recipe from MCP, or send your current scene for precise edits.</p>
+          <div class="mcp-connection"><span class="field-label">Endpoint</span><code id="mcp-endpoint">Not configured</code></div>
+          <div class="mcp-live-controls"><label class="toggle-option"><input id="mcp-live-sync" type="checkbox"><span>Follow MCP changes</span></label><p class="helper">Keep this tab open to render PNG requests from MCP.</p></div>
+          <div class="mcp-actions"><p id="mcp-status" role="status" aria-live="polite">Checking the connection…</p><div><button id="mcp-copy-endpoint" class="button button-secondary" type="button" disabled>Copy MCP endpoint</button><button id="mcp-pull" class="button button-secondary" type="button" disabled><svg class="icon"><use href="#i-download"/></svg>Load MCP scene</button><button id="mcp-push" class="button button-secondary" type="button" disabled><svg class="icon"><use href="#i-upload"/></svg>Send current scene</button></div></div>
+          <a id="mcp-export-link" class="button button-secondary mcp-export-link" href="#" target="_blank" rel="noopener" hidden><svg class="icon"><use href="#i-image"/></svg>Open latest PNG</a>
+          <button id="mcp-cancel-export" class="button button-secondary mcp-export-link" type="button" hidden>Cancel pending MCP export</button>
+        </div>
+      </details>
+      <div class="workspace-footer"><p id="status" role="status" aria-live="polite">Ready to build something small.</p><span>Built from geometry. No image AI.</span></div>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

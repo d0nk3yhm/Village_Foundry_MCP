@@ -1,0 +1,19 @@
+{
+  "name": "village-foundry-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Procedural medieval villages, buildings, interiors and animated characters with transparent orthographic exports and MCP control",
+  "engines": {"node": ">=20"},
+  "scripts": {
+    "start": "node scripts/local-server.mjs",
+    "local": "node scripts/local-server.mjs",
+    "dev": "node scripts/local-server.mjs",
+    "test": "node --test",
+    "test:local": "node --test tests/local-server.test.mjs",
+    "package:project": "node scripts/package-project.mjs"
+  },
+  "dependencies": {
+    "three": "0.180.0"
+  }
+}
