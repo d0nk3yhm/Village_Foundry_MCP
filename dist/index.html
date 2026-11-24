@@ -46,13 +46,7 @@
       <div id="exterior-controls">
       <section class="control-section preset-section">
         <label class="field-label" for="preset">House template</label>
-        <select id="preset">
-          <option value="village" selected>Village house</option>
-          <option value="source">Red-roof townhouse</option>
-          <option value="cottage">Little cottage</option>
-          <option value="inn">Village inn</option>
-          <option value="manor">Timber manor</option>
-        </select>
+        <select id="preset"><option value="village">Village merchant house</option></select>
         <div class="preset-cards" id="preset-cards" aria-label="Quick house presets">
           <button class="preset-card active" data-preset="village" aria-pressed="true" type="button"><span class="mini-house village-house" aria-hidden="true"><i></i></span><span>Village</span></button>
           <button class="preset-card" data-preset="cottage" aria-pressed="false" type="button"><span class="mini-house cottage-house" aria-hidden="true"><i></i></span><span>Cottage</span></button>
@@ -68,6 +62,26 @@
           <div class="field-inline"><label for="floors">Floors</label><select id="floors"><option value="1">1 floor</option><option value="2" selected>2 floors</option><option value="3">3 floors</option></select></div>
           <div class="range-field"><div class="field-heading"><label for="floor-height">Wall height per floor</label><output id="floor-height-value" for="floor-height">1.80</output></div><input id="floor-height" type="range" min="1.45" max="2.25" step="0.05" value="1.8"></div>
           <div class="range-field"><div class="field-heading"><label for="roof-pitch">Roof pitch</label><output id="roof-pitch-value" for="roof-pitch">45°</output></div><input id="roof-pitch" type="range" min="25" max="65" step="1" value="45"></div>
+          <div class="field-inline"><label for="roof-rotation">Roof ridge</label><select id="roof-rotation"><option value="0">Front to back · 0°</option><option value="90">Side to side · 90°</option></select></div>
+        </div>
+      </details>
+
+      <details class="control-section disclosure" open>
+        <summary><span><svg class="icon"><use href="#i-house"/></svg> Doors &amp; windows</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+        <div class="disclosure-body">
+          <div class="field-inline"><label for="door-face">Door wall</label><select id="door-face"><option value="front">Front</option><option value="left">Left side</option><option value="right">Right side</option><option value="back">Back</option></select></div>
+          <div class="field-inline"><label for="door-position">Door position</label><select id="door-position"><option value="auto">Automatic</option><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></div>
+          <p class="helper">Left and right are as you face each wall.</p>
+          <fieldset class="wall-window-counts">
+            <legend class="field-label">Main-wall windows per floor</legend>
+            <div class="wall-window-grid">
+              <label for="windows-front">Front<select id="windows-front"></select></label>
+              <label for="windows-back">Back<select id="windows-back"></select></label>
+              <label for="windows-left">Left side<select id="windows-left"></select></label>
+              <label for="windows-right">Right side<select id="windows-right"></select></label>
+            </div>
+          </fieldset>
+          <div class="field-inline"><label for="window-alignment">Window spacing</label><select id="window-alignment"><option value="even">Evenly spaced</option><option value="left">Group left</option><option value="right">Group right</option></select></div>
         </div>
       </details>
 
@@ -142,7 +156,7 @@
           </div>
           <p class="helper" id="map-size-summary">80 × 80 world units. Set exported pixels in PNG canvas below.</p>
           <div class="range-field"><div class="field-heading"><label for="map-house-count">Buildings</label><output id="map-house-count-value">10</output></div><input id="map-house-count" type="range" min="0" max="32" step="1" value="10"></div>
-          <div class="field-inline"><label for="map-house-preset">Building mix</label><select id="map-house-preset"><option value="mixed">Mixed village</option><option value="village">Merchant houses</option><option value="cottage">Cottages</option><option value="inn">Inns</option><option value="manor">Guild manors</option><option value="source">Stone houses</option></select></div>
+          <div class="field-inline"><label for="map-house-preset">Building mix</label><select id="map-house-preset"><option value="mixed">Mixed village</option></select></div>
           <div class="field-inline"><label for="map-road-style">Road surface</label><select id="map-road-style"><option value="dirt">Warm earth</option><option value="cobble">Cobblestone</option></select></div>
           <div class="toggle-grid">
             <label class="toggle-option"><input id="map-houses" type="checkbox" checked><span>Houses</span></label>
@@ -272,7 +286,7 @@
         <div class="panel-heading batch-heading"><div><span class="eyebrow">GROW YOUR WORLD</span><h2 id="batch-heading">Generate a whole village</h2><p class="helper">One style. Hundreds of little differences.</p></div><span class="batch-badge">BATCH EXPORT</span></div>
         <div class="batch-controls">
           <div class="compact-field batch-count-field"><label for="batch-count">Number of houses</label><input id="batch-count" type="number" min="1" max="500" step="1" value="100"></div>
-          <div class="compact-field batch-template-field"><label for="batch-template">Template mix</label><select id="batch-template"><option value="mixed" selected>Mixed village</option><option value="village">Village houses</option><option value="cottage">Little cottages</option><option value="inn">Village inns</option><option value="manor">Timber manors</option><option value="source">Red-roof townhouses</option></select></div>
+          <div class="compact-field batch-template-field"><label for="batch-template">Template mix</label><select id="batch-template"><option value="mixed">Mixed village</option></select></div>
           <div class="range-field batch-strength-field"><div class="field-heading"><label for="variation-strength">Variation</label><output id="variation-strength-value" for="variation-strength">65%</output></div><input id="variation-strength" type="range" min="0" max="100" step="1" value="65"><div class="range-end-labels"><span>Subtle</span><span>Adventurous</span></div></div>
         </div>
         <div class="batch-style-row"><label for="batch-style">Export style</label><select id="batch-style"><option value="current">Current preview style</option><option value="illustrated">Illustrated 2D</option><option value="pixel">Pixel art</option><option value="both">Both styles</option></select></div><div class="batch-bottom"><div class="batch-description"><span class="batch-format">PNG + RECIPES</span><p>Seeded variations, packed into one ZIP.</p></div><div class="batch-actions"><button id="batch-cancel-btn" class="button button-secondary" type="button" hidden>Cancel</button><button id="batch-btn" class="button button-primary" type="button"><svg class="icon"><use href="#i-download"/></svg>Export 100 houses</button></div></div>

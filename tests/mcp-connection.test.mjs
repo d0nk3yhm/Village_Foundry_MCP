@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { mcpConnection } from '../dist/mcp-connection.mjs';
-import { PRESETS, DEFAULT_PARAMS, normalizeHouse } from '../dist/house-schema.mjs';
+import { PRESETS, HOUSE_MATERIAL_FAMILIES, normalizeHouse } from '../dist/house-schema.mjs';
 import { INTERIOR_PRESETS, normalizeInterior } from '../dist/interior-schema.mjs';
 import { MAP_PRESETS, normalizeMap } from '../dist/map-schema.mjs';
 import { CHARACTER_PRESETS, CHARACTER_DURATIONS, normalizeCharacter } from '../dist/character-schema.mjs';
@@ -41,7 +41,7 @@ function controller(address, { fetcher, copyError = false } = {}) {
     return elements.get(id);
   };
   const context = vm.createContext({
-    mcpConnection, PRESETS, DEFAULT_PARAMS, normalizeHouse, INTERIOR_PRESETS, normalizeInterior,
+    mcpConnection, PRESETS, HOUSE_MATERIAL_FAMILIES, normalizeHouse, INTERIOR_PRESETS, normalizeInterior,
     MAP_PRESETS, normalizeMap, CHARACTER_PRESETS, CHARACTER_DURATIONS, normalizeCharacter,
     MATERIAL_CATALOG, MATERIAL_FAMILIES, Blob, URL, console,
     location: new URL(address),

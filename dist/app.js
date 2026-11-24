@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
-import { PRESETS, DEFAULT_PARAMS, normalizeHouse, buildHouse, disposeHouse, randomizeHouse } from './house-model.mjs';
+import { PRESETS, normalizeHouse, buildHouse, disposeHouse, randomizeHouse } from './house-model.mjs';
+import { HOUSE_FACES, HOUSE_MATERIAL_FAMILIES, MAX_WINDOWS_PER_WALL, pickHousePreset } from './house-schema.mjs';
 import { MATERIAL_CATALOG, MATERIAL_FAMILIES, materialCanvas, loadMaterialTexture, inferPalette } from './materials.mjs';
 import { HouseRenderer } from './renderer.mjs';
 import { zipBlobs } from './zip.mjs';
@@ -15,7 +16,7 @@ const renderAnimationSheet = async (...args) => (await import('./animation-expor
 
 const $ = id => document.getElementById(id);
 const catalog = new Map(MATERIAL_CATALOG.map(item => [item.id, item]));
-const familyByPreset = { village: 'village', cottage: 'cottage', source: 'townhouse', inn: 'townhouse', manor: 'manor' };
+const facadeSelects = ['doorFace', 'doorPosition', 'roofRotation', 'windowAlignment'];
 const toggles = ['chimney', 'dormer', 'porch', 'shutters', 'planters', 'sideWing', 'timber'];
 const inputId = key => key.replace(/[A-Z]/g, s => `-${s.toLowerCase()}`);
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -40,11 +41,11 @@ function outputBounds(raw, current) {
 }
 
 function baseRecipe(preset = 'village', seed = 742) {
-  const family = MATERIAL_FAMILIES.find(f => f.id === familyByPreset[preset]);
+  const family = MATERIAL_FAMILIES.find(f => f.id === HOUSE_MATERIAL_FAMILIES[preset]);
   const materials = { roof: family.roof, wall: family.wall, wood: family.wood, ground: family.ground };
   const tints = Object.fromEntries(['roof', 'wall', 'wood'].map(key => [key, catalog.get(materials[key]).color]));
   return { format: 'house-foundry', version: 1,
-    params: { ...DEFAULT_PARAMS, ...PRESETS[preset], preset, seed }, materials,
+    params: normalizeHouse({ preset, seed }), materials,
     tints, paletteBase: clone(tints),
     view: { elevation: 45, azimuth: 0 },
     output: defaultOutput(),
@@ -238,6 +239,8 @@ function scheduleRebuild() {
 
 function syncUI() {
   $('preset').value = state.params.preset;
+  for (const key of facadeSelects) $(inputId(key)).value = state.params[key];
+  for (const face of HOUSE_FACES) $(`windows-${face}`).value = state.params.windowCounts[face] ?? 'auto';
   for (const key of ['width', 'depth', 'floors', 'floorHeight', 'roofPitch', 'seed']) $(inputId(key)).value = state.params[key];
   for (const key of toggles) $(inputId(key)).checked = !!state.params[key];
   for (const key of ['roof', 'wall', 'wood']) $(`${key}-color`).value = activeStyle().tints[key];
@@ -311,6 +314,7 @@ function setMode(next) {
   materialTab = mode === 'interior' ? 'wood' : 'roof';
   for (const tab of document.querySelectorAll('[data-material-tab]')) { const selected = tab.dataset.materialTab === materialTab; tab.classList.toggle('active', selected); tab.setAttribute('aria-selected', selected); }
   const select = $('batch-template'); select.replaceChildren(new Option(mode === 'character' ? 'Village inhabitants' : mode === 'interior' ? 'Mixed interiors' : 'Mixed village', 'mixed'));
+  if (mode === 'exterior') select.add(new Option('Current house layout', 'current'));
   for (const [key, preset] of Object.entries(mode === 'character' ? CHARACTER_PRESETS : mode === 'interior' ? INTERIOR_PRESETS : PRESETS)) select.add(new Option(preset.label || key, key));
   syncUI(); renderMaterials(); scheduleRebuild();
 }
@@ -381,9 +385,11 @@ async function updateGround() {
 
 function variedRecipe(template, seed, strength, current = null) {
   const recipe = baseRecipe(template, seed), r = rng(seed ^ 0x578713);
-  recipe.params = randomizeHouse(template, seed, strength);
+  recipe.params = normalizeHouse(randomizeHouse(template, seed, strength));
   if (current && current.params.preset === template) {
-    // Keep the user's chosen finishes; variation adjusts proportions and details.
+    // Keep the chosen facade and finishes while varying proportions and details.
+    for (const key of facadeSelects) recipe.params[key] = current.params[key];
+    recipe.params.windowCounts = { ...current.params.windowCounts };
     recipe.materials = clone(current.materials); recipe.paletteBase = clone(current.paletteBase || current.tints);
     recipe.tints = clone(recipe.paletteBase);
   }
@@ -570,6 +576,7 @@ async function exportBatch() {
   const selectedStyle = $('batch-style').value, styles = selectedStyle === 'both' ? ['illustrated', 'pixel'] : [selectedStyle];
   const source = clone(activeRecipe()), baseSeed = (source.config || source.params).seed, choose = rng(baseSeed ^ 0x732943);
   const characterBatch = source.format === 'village-foundry-character', interiorBatch = source.format === 'house-foundry-interior', noun = characterBatch ? 'characters' : interiorBatch ? 'interiors' : 'houses';
+  const otherTemplates = characterBatch ? Object.keys(CHARACTER_PRESETS) : Object.keys(INTERIOR_PRESETS);
   const entries = [], houses = []; let pack = null;
   cancelBatch = false; setBusy(true); $('batch-cancel-btn').hidden = false;
   $('batch-progress').hidden = false; $('batch-progress').max = count; $('batch-progress').value = 0;
@@ -579,8 +586,9 @@ async function exportBatch() {
       await tick(); if (cancelBatch) break;
       const seed = (baseSeed + i) % 2147483648;
       const pick = choose();
-      const characterTemplates = Object.keys(CHARACTER_PRESETS);
-      const type = template === 'mixed' ? (characterBatch ? characterTemplates[Math.min(characterTemplates.length - 1, Math.floor(pick * characterTemplates.length))] : interiorBatch ? ['tavern', 'cottage', 'inn', 'workshop'][Math.min(3, Math.floor(pick * 4))] : (pick < .52 ? 'village' : pick < .75 ? 'cottage' : pick < .90 ? 'inn' : pick < .97 ? 'manor' : 'source')) : template;
+      let type = template;
+      if (template === 'current') type = source.params.preset;
+      if (template === 'mixed') type = characterBatch || interiorBatch ? otherTemplates[Math.floor(pick * otherTemplates.length)] : pickHousePreset(pick);
       const recipe = characterBatch ? variedCharacter(type, seed, strength, template === 'mixed' ? null : source) : interiorBatch ? variedInterior(type, seed, strength, template === 'mixed' ? null : source) : variedRecipe(type, seed, strength, template === 'mixed' ? null : source);
       recipe.view = clone(source.view); recipe.output = clone(source.output);
       pack = await makePack(recipe); renderer.setHouse(pack.house);
@@ -1001,6 +1009,25 @@ function bindMapDimensionInput(input, key) {
 }
 
 function bindEvents() {
+  $('preset').replaceChildren();
+  for (const [id, preset] of Object.entries(PRESETS)) {
+    $('preset').add(new Option(preset.label, id));
+    $('map-house-preset').add(new Option(preset.label, id));
+  }
+  for (const face of HOUSE_FACES) {
+    const select = $(`windows-${face}`);
+    select.add(new Option('Auto', 'auto'));
+    for (let count = 0; count <= MAX_WINDOWS_PER_WALL; count++) select.add(new Option(String(count), String(count)));
+    select.addEventListener('change', () => {
+      if (select.value === 'auto') delete state.params.windowCounts[face];
+      else state.params.windowCounts[face] = Number(select.value);
+      scheduleRebuild();
+    });
+  }
+  for (const key of facadeSelects) $(inputId(key)).addEventListener('change', event => {
+    state.params[key] = key === 'roofRotation' ? Number(event.target.value) : event.target.value;
+    scheduleRebuild();
+  });
   $('character-preset').replaceChildren(...Object.entries(CHARACTER_PRESETS).map(([key, preset]) => new Option(preset.label || key, key)));
   for (const id of savedControlIds) $(id).addEventListener('change', scheduleSave);
   $('mode-exterior').addEventListener('click', () => setMode('exterior'));

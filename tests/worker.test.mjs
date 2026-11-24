@@ -228,7 +228,8 @@ test('PNG completion retries a conditional conflict without losing a concurrent 
 test('template discovery includes houses, rooms, and maps; house colors and edits survive recipe normalization', async () => {
   const bucket = new MockR2();
   const listed = (await call(bucket, 'list_templates', {}, null)).value.result.structuredContent;
-  assert.equal(listed.templates.filter(value => value.kind === 'house').length, 5);
+  const houses = listed.templates.filter(value => value.kind === 'house').map(value => value.preset).sort();
+  assert.deepEqual(houses, ['cottage', 'gatehouse', 'inn', 'longhouse', 'manor', 'source', 'village', 'weaver']);
   assert.equal(listed.templates.filter(value => value.kind === 'interior').length, 4);
   assert.equal(listed.templates.filter(value => value.kind === 'map').length, 4);
   assert.equal(listed.templates.filter(value => value.kind === 'character').length, 8);
@@ -264,6 +265,48 @@ test('template discovery includes houses, rooms, and maps; house colors and edit
   assert.equal(plasterAgain.scene.tints.wall, '#d2c2aa');
   const freshStone = (await call(new MockR2(), 'generate_house', { params: { preset: 'village', stoneColor: '#998877', wallColor: '#FFEEDD' } })).value.result.structuredContent;
   assert.equal(freshStone.scene.tints.wall, '#998877'); assert.equal(freshStone.scene.paletteBase.wall, '#998877');
+});
+
+test('MCP house layout controls survive partial edits, exports, and browser scene writes', async () => {
+  const bucket = new MockR2();
+  const tools = (await rpc(bucket, 'tools/list', {}, null)).value.result.tools;
+  for (const [toolName, field] of [['generate_house', 'params'], ['update_house', 'patch']]) {
+    const schema = tools.find(tool => tool.name === toolName).inputSchema.properties[field].properties;
+    assert.deepEqual(schema.roofRotation.enum, [0, 90]);
+    for (const face of ['front', 'back', 'left', 'right']) assert.ok(schema.windowCounts.properties[face]);
+  }
+  const controls = {doorFace: 'right', doorPosition: 'center', roofRotation: 90, windowCounts: {front: 0, left: 2}, windowAlignment: 'right'};
+  const made = (await call(bucket, 'generate_house', {params: {preset: 'weaver', ...controls}})).value.result.structuredContent;
+  for (const [key, value] of Object.entries(controls)) assert.deepEqual(made.scene.params[key], value);
+  const queued = (await call(bucket, 'request_export')).value.result.structuredContent;
+  assert.deepEqual(queued.exportJob.scene.params, made.scene.params);
+
+  const changed = (await call(bucket, 'update_house', {patch: {doorPosition: 'left', windowCounts: {front: null, back: 3}}})).value.result.structuredContent;
+  assert.deepEqual(changed.scene.params.windowCounts, {left: 2, back: 3});
+  assert.equal(changed.scene.params.doorFace, 'right');
+  assert.equal(changed.scene.params.doorPosition, 'left');
+  assert.equal(changed.scene.params.roofRotation, 90);
+  assert.deepEqual(changed.exportJob.scene.params, made.scene.params);
+
+  for (const patch of [
+    {doorFace: 'side'}, {doorPosition: 0}, {roofRotation: '90'}, {roofRotation: 45}, {windowAlignment: 'center'},
+    {windowCounts: []}, {windowCounts: {top: 1}}, {windowCounts: {front: -1}}, {windowCounts: {front: 4}},
+    {windowCounts: {back: 1.5}}, {windowCounts: {left: '2'}},
+  ]) {
+    const result = (await call(bucket, 'update_house', {patch})).value.result;
+    assert.equal(result.structuredContent.error.code, 'invalid_input', JSON.stringify(patch));
+  }
+  const restored = await api(bucket, '/api/scene', {method: 'POST', json: {scene: made.scene, expectedRevision: changed.revision}});
+  assert.equal(restored.status, 200);
+  assert.deepEqual((await sceneOf(bucket)).scene.params, made.scene.params);
+});
+
+test('each added house template is available as a map building preset', async () => {
+  const bucket = new MockR2();
+  for (const housePreset of ['longhouse', 'gatehouse', 'weaver']) {
+    const map = (await call(bucket, 'generate_map', {config: {housePreset}})).value.result.structuredContent;
+    assert.equal(map.scene.config.housePreset, housePreset);
+  }
 });
 
 test('map validation retains palette and feature controls and rejects invalid types, bounds, and render styles', async () => {

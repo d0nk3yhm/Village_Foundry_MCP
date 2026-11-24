@@ -1,6 +1,6 @@
 import { normalizeInterior, INTERIOR_PRESETS, INTERIOR_ITEM_TYPES } from '../dist/interior-schema.mjs';
 import { interpretBrief } from '../dist/director.mjs';
-import { normalizeHouse, HOUSE_PRESETS } from '../dist/house-schema.mjs';
+import { normalizeHouse, HOUSE_PRESETS, HOUSE_FACES, HOUSE_DOOR_POSITIONS, HOUSE_ROOF_ROTATIONS, HOUSE_WINDOW_ALIGNMENTS, MAX_WINDOWS_PER_WALL } from '../dist/house-schema.mjs';
 import { normalizeMap, MAP_PRESETS } from '../dist/map-schema.mjs';
 import { normalizeCharacter, CHARACTER_PRESETS, CHARACTER_ANIMATIONS, CHARACTER_ANIMATION_DURATIONS } from '../dist/character-schema.mjs';
 
@@ -129,9 +129,9 @@ function validatedConfig(raw) {
   if (has(input, 'floorIndex') && input.floorIndex >= normalized.floorCount) invalid('floorIndex must be smaller than floorCount. Floors are indexed from zero.');
   return normalized;
 }
-function validatedHouse(raw) {
+function validatedHouse(raw, previousWindowCounts = {}) {
   requireObject(raw, 'House parameters');
-  if (has(raw, 'preset') && (typeof raw.preset !== 'string' || !has(HOUSE_PRESETS, raw.preset))) invalid('Unknown house preset. Choose village, cottage, inn, manor, or source.');
+  if (has(raw, 'preset') && (typeof raw.preset !== 'string' || !has(HOUSE_PRESETS, raw.preset))) invalid(`Unknown house preset. Choose from ${Object.keys(HOUSE_PRESETS).join(', ')}.`);
   const input = {}, numeric = { width: [3, 8], depth: [3, 10], floors: [1, 3], floorHeight: [1.45, 2.25], roofPitch: [25, 65], seed: [0, 4294967295], paintSeed: [0, 4294967295] };
   if (has(raw, 'preset')) input.preset = raw.preset;
   for (const [key, range] of Object.entries(numeric)) if (has(raw, key)) input[key] = finiteNumber(raw[key], key, ...range, ['floors', 'seed', 'paintSeed'].includes(key));
@@ -141,8 +141,20 @@ function validatedHouse(raw) {
   for (const key of ['roofColor', 'wallColor', 'stoneColor', 'woodColor']) if (has(raw, key)) {
     if (typeof raw[key] !== 'string' || !/^#[0-9a-f]{6}$/i.test(raw[key])) invalid(`${key} must be a six-digit #RRGGBB color.`); input[key] = raw[key].toLowerCase();
   }
-  for (const [key, allowed] of [['roofKind', ['tiles', 'shingles', 'thatch', 'metal']], ['wallKind', ['stone', 'brick', 'plaster']]]) if (has(raw, key)) {
+  for (const [key, allowed] of [
+    ['roofKind', ['tiles', 'shingles', 'thatch', 'metal']], ['wallKind', ['stone', 'brick', 'plaster']],
+    ['doorFace', HOUSE_FACES], ['doorPosition', HOUSE_DOOR_POSITIONS], ['roofRotation', HOUSE_ROOF_ROTATIONS], ['windowAlignment', HOUSE_WINDOW_ALIGNMENTS],
+  ]) if (has(raw, key)) {
     if (!allowed.includes(raw[key])) invalid(`${key} must be one of: ${allowed.join(', ')}.`); input[key] = raw[key];
+  }
+  if (has(raw, 'windowCounts')) {
+    const counts = requireObject(raw.windowCounts, 'windowCounts');
+    input.windowCounts = { ...previousWindowCounts };
+    for (const [face, count] of Object.entries(counts)) {
+      if (!HOUSE_FACES.includes(face)) invalid(`Unknown windowCounts wall. Choose from ${HOUSE_FACES.join(', ')}.`);
+      if (count === null) delete input.windowCounts[face];
+      else input.windowCounts[face] = finiteNumber(count, `windowCounts.${face}`, 0, MAX_WINDOWS_PER_WALL, true);
+    }
   }
   return normalizeHouse(input);
 }
@@ -158,7 +170,7 @@ function validatedMap(raw) {
   if (has(raw, 'roadStyle')) { if (!['dirt', 'cobble'].includes(raw.roadStyle)) invalid('roadStyle must be dirt or cobble.'); input.roadStyle = raw.roadStyle; }
   if (has(raw, 'layoutStyle')) { if (raw.layoutStyle !== 'organic') invalid('layoutStyle must be organic.'); input.layoutStyle = raw.layoutStyle; }
   if (has(raw, 'landform')) { if (!['island', 'mainland'].includes(raw.landform)) invalid('landform must be island or mainland.'); input.landform = raw.landform; }
-  if (has(raw, 'housePreset')) { if (typeof raw.housePreset !== 'string' || !(raw.housePreset === 'mixed' || has(HOUSE_PRESETS, raw.housePreset))) invalid('housePreset must be mixed, village, cottage, inn, manor, or source.'); input.housePreset = raw.housePreset; }
+  if (has(raw, 'housePreset')) { if (typeof raw.housePreset !== 'string' || !(raw.housePreset === 'mixed' || has(HOUSE_PRESETS, raw.housePreset))) invalid(`housePreset must be mixed or one of ${Object.keys(HOUSE_PRESETS).join(', ')}.`); input.housePreset = raw.housePreset; }
   for (const key of ['roofColor', 'woodColor', 'stoneColor', 'plasterColor']) if (has(raw, key)) {
     if (typeof raw[key] !== 'string' || !/^#[0-9a-f]{6}$/i.test(raw[key])) invalid(`${key} must be a six-digit #RRGGBB color.`); input[key] = raw[key].toLowerCase();
   }
@@ -315,12 +327,19 @@ const itemSchema = { type: 'object', properties: {
 }, required: ['id', 'type', 'x', 'z'], additionalProperties: false };
 configSchema.properties.items = { type: 'array', maxItems: 100, items: itemSchema };
 const colorRule = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' };
+const windowCountRule = { oneOf: [{ type: 'integer', minimum: 0, maximum: MAX_WINDOWS_PER_WALL }, { type: 'null' }] };
 const houseSchema = { type: 'object', properties: {
   preset: { type: 'string', enum: Object.keys(HOUSE_PRESETS) }, width: { type: 'number', minimum: 3, maximum: 8 }, depth: { type: 'number', minimum: 3, maximum: 10 },
   floors: { type: 'integer', minimum: 1, maximum: 3 }, floorHeight: { type: 'number', minimum: 1.45, maximum: 2.25 }, roofPitch: { type: 'number', minimum: 25, maximum: 65 }, seed: { type: 'integer', minimum: 0, maximum: 4294967295 },
   paintSeed: { type: 'integer', minimum: 0, maximum: 4294967295, description: 'Optional surface-paint seed; defaults to the house seed. Shared map finishes can retain this independently of geometry variation.' },
   roofColor: colorRule, wallColor: colorRule, stoneColor: colorRule, woodColor: colorRule,
   roofKind: { type: 'string', enum: ['tiles', 'shingles', 'thatch', 'metal'] }, wallKind: { type: 'string', enum: ['stone', 'brick', 'plaster'] },
+  doorFace: { type: 'string', enum: HOUSE_FACES, description: 'Main wall containing the entrance. Front faces local +Z.' },
+  doorPosition: { type: 'string', enum: HOUSE_DOOR_POSITIONS, description: 'Position as seen from outside the chosen wall. Auto uses the template placement.' },
+  roofRotation: { type: 'integer', enum: HOUSE_ROOF_ROTATIONS, description: 'Turn the main roof in degrees relative to its original orientation.' },
+  windowCounts: { type: 'object', properties: Object.fromEntries(HOUSE_FACES.map(face => [face, windowCountRule])), additionalProperties: false,
+    description: 'Window count per storey on each main wall. Zero removes that wall’s windows. On update, omitted walls keep their counts. Set a wall to null to restore automatic placement.' },
+  windowAlignment: { type: 'string', enum: HOUSE_WINDOW_ALIGNMENTS, description: 'Space custom windows evenly or toward the left or right when looking at each wall from outside.' },
   ...Object.fromEntries(['chimney', 'dormer', 'porch', 'shutters', 'planters', 'sideWing', 'timber', 'useTextures', 'usePaintedSurfaces', 'exposedRafters'].map(key => [key, { type: 'boolean' }])),
 }, additionalProperties: false };
 const mapSchema = { type: 'object', properties: {
@@ -362,7 +381,7 @@ const tool = (name, description, properties = {}, required = [], readOnly = fals
 const TOOLS = [
   tool('list_templates', 'List procedural house, interior, map, and character templates, furniture types, animation durations, and configuration limits. No image generation is used.', {}, [], true),
   tool('get_scene', 'Read your current house, interior, map, or character scene, revision, last browser-computed layout, and export-job status.', {}, [], true),
-  tool('generate_house', 'Create a house from explicit template parameters. This replaces your current scene; rendering occurs in the open browser app.', { params: houseSchema, expectedRevision: integerRevision }),
+  tool('generate_house', 'Replace the current scene with a house from a template. Set the door placement, roof rotation, and window counts for each wall. Rendering occurs in the open browser app.', { params: houseSchema, expectedRevision: integerRevision }),
   tool('update_house', 'Patch parameters of the current house scene. Unspecified fields are retained.', { patch: houseSchema, expectedRevision: integerRevision }, ['patch']),
   tool('generate_map', 'Create a village map with optional generated houses, roads, fences, trees, water, and gardens. This replaces your current scene.', { config: mapSchema, expectedRevision: integerRevision }),
   tool('update_map', 'Patch parameters of the current village map. Unspecified fields are retained.', { patch: mapSchema, expectedRevision: integerRevision }, ['patch']),
@@ -470,7 +489,9 @@ async function callTool(name, args, request, env) {
     ...Object.keys(MAP_PRESETS).map(preset => ({ kind: 'map', format: 'village-foundry-map', preset, config: normalizeMap({ preset, seed: 742 }) })),
     ...Object.keys(CHARACTER_PRESETS).map(preset => ({ kind: 'character', format: 'village-foundry-character', preset, config: normalizeCharacter({ preset, seed: 742 }) })),
   ], furnitureTypes: INTERIOR_ITEM_TYPES, animations: CHARACTER_ANIMATIONS, animationDurations: CHARACTER_ANIMATION_DURATIONS,
-    limits: { house: { width: [3, 8], depth: [3, 10], floors: [1, 3] }, interior: { width: [6, 20], depth: [6, 20], tables: [0, 12], beds: [0, 12], bedrooms: [0, 6], floorIndex: [0, 2], floorCount: [1, 3], layoutVariant: ['auto', 0, 1, 2, 3, 4, 5], customItems: 100 }, map: { width: [24, 256], depth: [24, 256], houseCount: [0, 32] }, character: { height: [1.05, 2], gender: ['female', 'male'], age: ['adult', 'child'], time: [0, 3600], direction: [0, 360] },
+    limits: { house: { width: [3, 8], depth: [3, 10], floors: [1, 3], doorFace: HOUSE_FACES, doorPosition: HOUSE_DOOR_POSITIONS,
+      roofRotation: HOUSE_ROOF_ROTATIONS, windowsPerWallPerStorey: [0, MAX_WINDOWS_PER_WALL], windowAlignment: HOUSE_WINDOW_ALIGNMENTS },
+      interior: { width: [6, 20], depth: [6, 20], tables: [0, 12], beds: [0, 12], bedrooms: [0, 6], floorIndex: [0, 2], floorCount: [1, 3], layoutVariant: ['auto', 0, 1, 2, 3, 4, 5], customItems: 100 }, map: { width: [24, 256], depth: [24, 256], houseCount: [0, 32] }, character: { height: [1.05, 2], gender: ['female', 'male'], age: ['adult', 'child'], time: [0, 3600], direction: [0, 360] },
       stillExport: { resolutions: STILL_RESOLUTIONS, maxResolution: 4096, maxNativeRenderSide: 8192, maxNativeRenderPixels: 16777216, maxPngSide: 8192, maxPngPixels: 33554432, maxPngBytes: PNG_LIMIT },
       animationExport: { frames: [4, 24], directions: [1, 4, 8], fps: [1, 24], maxResolution: 512, maxScale: 2 } },
     note: 'Geometry is built from explicit parameters. Images can guide materials; no image model reconstructs a scene.' };
@@ -484,7 +505,7 @@ async function callTool(name, args, request, env) {
   if (name === 'generate_house') {
     scene = { format: 'house-foundry', version: 1, params: validatedHouse({ seed: 742, ...(args.params === undefined ? {} : requireObject(args.params, 'params')) }), view: scene.view, output: scene.output };
   } else if (name === 'update_house') {
-    const patch = requireObject(args.patch, 'patch'); scene.params = validatedHouse({ ...scene.params, ...patch });
+    const patch = requireObject(args.patch, 'patch'); scene.params = validatedHouse({ ...scene.params, ...patch }, scene.params.windowCounts);
     for (const [field, slot] of [['roofColor', 'roof'], ['woodColor', 'wood']]) if (has(patch, field)) {
       scene.tints = { ...(scene.tints || {}), [slot]: scene.params[field] }; scene.paletteBase = { ...(scene.paletteBase || {}), [slot]: scene.params[field] };
     }

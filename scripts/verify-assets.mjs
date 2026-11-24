@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import * as THREE from '../dist/vendor/three.module.js';
 import { buildHouse, disposeHouse, randomizeHouse, PRESETS, DEFAULT_PARAMS } from '../dist/house-model.mjs';
+import { HOUSE_MATERIAL_FAMILIES, pickHousePreset } from '../dist/house-schema.mjs';
 import { MATERIAL_CATALOG, MATERIAL_FAMILIES } from '../dist/materials.mjs';
 import { HouseRenderer } from '../dist/renderer.mjs';
 import { zipBlobs } from '../dist/zip.mjs';
@@ -30,13 +31,12 @@ const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const clone=value=>JSON.parse(JSON.stringify(value));
 const rng=seed=>{let a=seed>>>0;return()=>{a+=0x6d2b79f5;let t=Math.imul(a^a>>>15,a|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};};
 const catalog=new Map(MATERIAL_CATALOG.map(item=>[item.id,item]));
-const familyByPreset={village:'village',cottage:'cottage',source:'townhouse',inn:'townhouse',manor:'manor'};
 const output={resolution:384,scale:2,pixelated:true,outline:true,shadow:true};
 const view={elevation:45,azimuth:0};
 
 // Mirrors the workbench's coherent family selection and seeded finish variation.
 function recipeFor(preset,seed,strength=.65){
-  const family=MATERIAL_FAMILIES.find(item=>item.id===familyByPreset[preset]);
+  const family=MATERIAL_FAMILIES.find(item=>item.id===HOUSE_MATERIAL_FAMILIES[preset]);
   const materials=Object.fromEntries(['roof','wall','wood','ground'].map(key=>[key,family[key]]));
   const paletteBase=Object.fromEntries(['roof','wall','wood'].map(key=>[key,catalog.get(materials[key]).color]));
   const tints=clone(paletteBase),r=rng(seed^0x578713);
@@ -93,7 +93,7 @@ function renderOne(recipe,index,record=true){
 
 try{
   for(let index=0;index<count;index++){
-    const pick=choose(),preset=pick<.52?'village':pick<.75?'cottage':pick<.90?'inn':pick<.97?'manor':'source';
+    const preset=pickHousePreset(choose());
     const seed=(baseSeed+index)%2147483648,recipe=recipeFor(preset,seed),name=`${String(index+1).padStart(3,'0')}-house-${preset}-${seed}`;
     const {png,hash,meta,alpha}=renderOne(recipe,index);
     assert(!hashes.has(hash),'Every distinct seeded asset should have distinct rendered pixels.');hashes.add(hash);

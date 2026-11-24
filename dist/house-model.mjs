@@ -2,7 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import { createPaintedSurface } from './painted-surfaces.mjs';
 
 /** Solid, deterministic, reusable geometry. No billboards or model services. */
-import { PRESETS, DEFAULT_PARAMS, normalizeHouse, houseEntrance } from './house-schema.mjs';
+import { PRESETS, DEFAULT_PARAMS, HOUSE_FACES, normalizeHouse, houseEntrance } from './house-schema.mjs';
 export { PRESETS, DEFAULT_PARAMS, normalizeHouse, houseEntrance };
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -32,6 +32,13 @@ export function randomizeHouse(template = 'village', seed = 1, variation = 0.65)
     c.offsetHSL((r() - .5) * .035 * v, (r() - .5) * .10 * v, (r() - .5) * .12 * v);
     result[key] = `#${c.getHexString()}`;
   }
+  // Draw layout variation after colours so existing seeds retain their finishes.
+  const pick=items=>items[Math.floor(r()*items.length)];
+  if(r()<v*.65)result.doorFace=pick(HOUSE_FACES);
+  if(r()<v*.80)result.doorPosition=pick(['left','center','right']);
+  if(r()<v*.50)result.roofRotation=base.roofRotation===90?0:90;
+  if(r()<v*.45)result.windowAlignment=pick(['left','right']);
+  if(r()<v*.70)result.windowCounts={[pick(HOUSE_FACES)]:pick([1,2,3])};
   return result;
 }
 
@@ -114,7 +121,8 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
   for(const n of [p.width,p.depth,p.floorHeight,p.roofPitch]) if(!Number.isFinite(n)) throw new Error('House dimensions must be finite numbers.');
   const r=seeded(p.seed), group=new THREE.Group();group.name=`${preset}-house`;
   const W=p.width,D=p.depth,FH=p.floorHeight,hw=W/2,hd=D/2,base=.14,wallTop=base+p.floors*FH;
-  const roofRise=hw*Math.tan(THREE.MathUtils.degToRad(p.roofPitch));
+  const roofAngle=THREE.MathUtils.degToRad(p.roofRotation);
+  const roofWidth=p.roofRotation===90?D:W,roofDepth=p.roofRotation===90?W:D;
   const materials=new Map(), batches=new Map(), unitBox=new THREE.BoxGeometry(1,1,1);
   const stoneBox=softenedBoxGeometry(.045),timberBox=softenedBoxGeometry(.023);
   const timberHorizontalBox=timberBox.clone();
@@ -165,12 +173,24 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
     };
     m.roof.customProgramCacheKey=()=> 'procedural-roof-surface-uv-v1';
   }
+  // Assemble roof parts, porches and windows in their own coordinate frames.
+  // Apply the same transform to ordinary meshes and queued instances.
+  let assemblyFrame=null;
+  function inFrame(x,z,angle,build,scaleX=1) {
+    if(!x&&!z&&!angle&&scaleX===1)return build();
+    const previous=assemblyFrame;
+    const transform=new THREE.Matrix4().makeRotationY(angle).scale(new THREE.Vector3(scaleX,1,1));
+    transform.setPosition(x,0,z);
+    assemblyFrame=previous?transform.premultiply(previous):transform;
+    try{return build();}finally{assemblyFrame=previous;}
+  }
   function instance(geometry,material,position,size,quaternion=qIdentity,tint=null,name='details',uvTransform=null) {
     if(size.some(v=>!Number.isFinite(v)||v<=0)||position.some(v=>!Number.isFinite(v))) return;
     const materialKey=Array.isArray(material)?material.map(x=>x.uuid).join('|'):material.uuid;
     const key=`${geometry.uuid}:${materialKey}:${name}`;
     let batch=batches.get(key);if(!batch){batch={geometry,material,name,matrices:[],colors:[],uvs:[]};batches.set(key,batch);}
     matrix.compose(new THREE.Vector3(...position),quaternion,new THREE.Vector3(...size));
+    if(assemblyFrame)matrix.premultiply(assemblyFrame);
     batch.matrices.push(matrix.clone());batch.colors.push(tint||new THREE.Color(1,1,1));batch.uvs.push(uvTransform||[1,1,0,0]);
   }
   function box(position,size,material=m.wood,quaternion=qIdentity,tint=null,name='carpentry') {
@@ -183,7 +203,7 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
     box(av.add(bv).multiplyScalar(.5).toArray(),[thickness,length,depth],material,q,null,name);
   }
   function mesh(geometry,material,position=[0,0,0],name='detail',rotation=null) {
-    const item=new THREE.Mesh(geometry,material);item.position.set(...position);if(rotation)item.rotation.set(...rotation);item.castShadow=true;item.receiveShadow=true;item.name=name;group.add(item);return item;
+    const item=new THREE.Mesh(geometry,material);item.position.set(...position);if(rotation)item.rotation.set(...rotation);if(assemblyFrame)item.applyMatrix4(assemblyFrame);item.castShadow=true;item.receiveShadow=true;item.name=name;group.add(item);return item;
   }
   const faces={front:{n:[0,0,1],t:[1,0,0],origin:[0,0,hd],angle:0,width:W},back:{n:[0,0,-1],t:[-1,0,0],origin:[0,0,-hd],angle:Math.PI,width:W},left:{n:[-1,0,0],t:[0,0,1],origin:[-hw,0,0],angle:-Math.PI/2,width:D},right:{n:[1,0,0],t:[0,0,-1],origin:[hw,0,0],angle:Math.PI/2,width:D}};
   function facePoint(face,u,y,offset=0) { const f=typeof face==='string'?faces[face]:face;return [f.origin[0]+f.t[0]*u+f.n[0]*offset,y,f.origin[2]+f.t[2]*u+f.n[2]*offset]; }
@@ -195,22 +215,60 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
 
   // Recessed openings are planned before masonry so blocks do not cross them.
   const openings={front:[],back:[],left:[],right:[]};
-  const entrance=houseEntrance(p),doorX=entrance.door.x,doorW=entrance.door.width,doorH=entrance.door.height;
-  openings.front.push({u:doorX,y:base+doorH/2,w:doorW+.2,h:doorH+.13,door:true});
+  const entrance=houseEntrance(p),doorFace=entrance.face,doorU=entrance.u,doorW=entrance.door.width,doorH=entrance.door.height;
+  openings[doorFace].push({u:doorU,y:base+doorH/2,w:doorW+.2,h:doorH+.13,door:true});
   const windows=[];
+  const wingWidth=Math.min(1.6,W*.33),wingDepth=Math.min(2.8,D*.47);
+  const wingSide=doorFace==='left'?'right':'left';
+  const wingZ=hd-wingDepth/2-.38;
+  const customDoor=doorFace!=='front'||p.doorPosition!=='auto'||Boolean(PRESETS[preset].doorPosition);
+  const customLayout=customDoor||p.roofRotation!==0||p.windowAlignment!=='even'||Object.keys(p.windowCounts).length>0;
+  function windowSpans(face,floor) {
+    const f=faces[face],edge=f.width/2-.12;
+    let spans=[[-edge,edge]];
+    function reserve(u,width) {
+      spans=spans.flatMap(([lo,hi])=>[[lo,Math.min(hi,u-width/2)],[Math.max(lo,u+width/2),hi]])
+        .filter(([lo,hi])=>hi-lo>.15);
+    }
+    if(face===doorFace&&floor===0)reserve(doorU,Math.max(doorW+.38,(entrance.porch?.width||0)+.35));
+    if(p.sideWing&&face===wingSide&&floor<2)reserve(f.t[2]*wingZ,wingDepth+.24);
+    return spans;
+  }
+  function placeWindows(face,floor,count,y,w,h) {
+    const spans=windowSpans(face,floor).map(([lo,hi])=>({lo,hi,count:0}));
+    if(!spans.length)return;
+    const trim=p.shutters?2*(Math.min(.28,w*.40)+.14):.26;
+    const fromEdge=p.windowAlignment==='right'?[...spans].reverse():spans;
+    for(let n=0;n<count;n++) {
+      const room=s=>(s.hi-s.lo)/(s.count+1);
+      const preferred=p.windowAlignment!=='even'&&fromEdge.find(span=>room(span)>=w+trim);
+      (preferred||fromEdge.reduce((a,b)=>room(a)>=room(b)?a:b)).count++;
+    }
+    for(const span of spans) {
+      if(!span.count)continue;
+      const bay=(span.hi-span.lo)/span.count;
+      const spread=p.windowAlignment==='even'?bay:Math.min(bay,(w+trim)*1.22);
+      const start=p.windowAlignment==='right'?span.hi-span.count*spread:span.lo;
+      for(let i=0;i<span.count;i++)windows.push({face,floor,u:start+(i+.5)*spread,y,w,h,lattice:floor===0,scaleX:Math.min(1,spread*.93/(w+trim))});
+    }
+  }
   for(let floor=0;floor<p.floors;floor++) {
     const cy=base+floor*FH+FH*.55;
     let xs=floor===0?(preset==='source'?[0,hw*.46,hw*.88]:preset==='cottage'?[-hw*.64,hw*.64]:[-hw*.48]):(W>6?[-hw*.65,0,hw*.65]:[-hw*.5,hw*.5]);
     const ww=floor===0?.58:Math.min(.88,W*.18),wh=floor===0?FH*.50:FH*.52;
     if(preset==='source')xs=xs.map(x=>Math.min(hw-ww*.65,x));
-    for(const x of xs)windows.push({face:'front',u:x,y:cy,w:ww,h:wh,floor,lattice:floor===0});
-    for(const face of ['back','left','right']) {
-      const width=faces[face].width,positions=width>6?[-width*.31,0,width*.31]:[-width*.25,width*.25];
-      for(const u of positions)windows.push({face,u,y:cy,w:floor===0?.58:.82,h:wh,floor,lattice:floor===0});
+    for(const [face,f] of Object.entries(faces)) {
+      const width=f.width,positions=face==='front'?xs:width>6?[-width*.31,0,width*.31]:[-width*.25,width*.25];
+      const w=face==='front'?ww:floor===0?.58:.82;
+      const count=p.windowCounts[face];
+      const besideDoor=face===doorFace&&floor===0&&customDoor;
+      const besideWing=p.sideWing&&face===wingSide&&floor<2&&customLayout;
+      if(count!==undefined||p.windowAlignment!=='even'||besideDoor||besideWing){
+        placeWindows(face,floor,count??positions.length,cy,w,wh);
+      }else for(const u of positions)windows.push({face,u,y:cy,w,h:wh,floor,lattice:floor===0});
     }
   }
-  for(const w of windows)openings[w.face].push({u:w.u,y:w.y,w:w.w+.15,h:w.h+.16});
-  const overlaps=(holes,u,y,w,h)=>holes.some(a=>Math.abs(a.u-u)<(a.w+w)/2+.025&&Math.abs(a.y-y)<(a.h+h)/2+.025);
+  for(const w of windows)openings[w.face].push({u:w.u,y:w.y,w:(w.w+.15)*(w.scaleX??1),h:w.h+.16});
 
   box([0,.07,0],[W+.14,.14,D+.14],m.foundation,qIdentity,null,'foundation');
   for(let floor=0;floor<p.floors;floor++) {
@@ -294,26 +352,30 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
       for(const sy of [-1,1])faceBox(f,su,y+sy*hh*.30,.23,sw+.025,.055,.04,m.woodLight,null,'shutter-crossbars');
     }
   }
-  windows.forEach(w=>window(w));
+  const localFront={...faces.front,origin:[0,0,0]};
+  for(const w of windows) {
+    if(w.scaleX===undefined){window(w);continue;}
+    const f=faces[w.face],[x,,z]=facePoint(f,w.u,0);
+    inFrame(x,z,f.angle,()=>window({...w,u:0},localFront),w.scaleX);
+  }
 
   // Boarded doorway, lintel, hinges, threshold, and a real ring handle.
   const doorCY=base+doorH/2;
-  faceBox('front',doorX,doorCY,.08,doorW+.18,doorH+.1,.15,m.woodDark,null,'door-opening');
-  for(let k=0;k<5;k++)faceBox('front',doorX-doorW/2+(k+.5)*doorW/5,doorCY,.18,doorW/5-.014,doorH-.04,.09,m.woodLight,new THREE.Color().setScalar(.81+r()*.22),'door-boards');
-  for(const side of [-1,1])faceBox('front',doorX+side*(doorW/2+.065),doorCY,.21,.13,doorH+.15,.17,m.wood,null,'door-frame');
-  faceBox('front',doorX,base+doorH+.07,.23,doorW+.31,.16,.19,m.woodLight,null,'door-lintel');
-  for(const sy of [.25,.73])faceBox('front',doorX-doorW*.25,base+doorH*sy,.25,doorW*.42,.065,.04,m.metal,null,'door-hinges');
-  {const step=entrance.doorStep;box([step.x,step.y,step.z],[step.width,step.height,step.depth],m.foundation,qIdentity,null,'door-step');}
+  faceBox(doorFace,doorU,doorCY,.08,doorW+.18,doorH+.1,.15,m.woodDark,null,'door-opening');
+  for(let k=0;k<5;k++)faceBox(doorFace,doorU-doorW/2+(k+.5)*doorW/5,doorCY,.18,doorW/5-.014,doorH-.04,.09,m.woodLight,new THREE.Color().setScalar(.81+r()*.22),'door-boards');
+  for(const side of [-1,1])faceBox(doorFace,doorU+side*(doorW/2+.065),doorCY,.21,.13,doorH+.15,.17,m.wood,null,'door-frame');
+  faceBox(doorFace,doorU,base+doorH+.07,.23,doorW+.31,.16,.19,m.woodLight,null,'door-lintel');
+  for(const sy of [.25,.73])faceBox(doorFace,doorU-doorW*.25,base+doorH*sy,.25,doorW*.42,.065,.04,m.metal,null,'door-hinges');
+  const doorAngle=faces[doorFace].angle,doorRotation=new THREE.Quaternion().setFromAxisAngle(UP,doorAngle);
+  {const step=entrance.doorStep;box([step.x,step.y,step.z],[step.width,step.height,step.depth],m.foundation,doorRotation,null,'door-step');}
   const ringGeo=new THREE.TorusGeometry(.095,.022,5,12);
-  mesh(ringGeo,m.metal,[doorX+doorW*.26,base+doorH*.46,hd+.30],'door-ring');
-  faceBox('front',doorX+doorW*.26,base+doorH*.51,.275,.11,.13,.04,m.metal,null,'door-handle-plate');
+  mesh(ringGeo,m.metal,facePoint(doorFace,doorU+doorW*.26,base+doorH*.46,.30),'door-ring',[0,doorAngle,0]);
+  faceBox(doorFace,doorU+doorW*.26,base+doorH*.51,.275,.11,.13,.04,m.metal,null,'door-handle-plate');
 
-  const chimneyX=preset==='source'?hw*.78:-hw*.61,chimneyZ=preset==='source'?-hd*.58:-D*.12;
-  const dormerBounds=p.dormer?{x:hw*.64,z:D*.09,w:1.0,d:1.18}:null;
-  function roof(cx,cz,width,depth,eaveY,pitchDegrees,{mini=false,gableMat=m.plaster,bodyGable=true,name='main-roof',exclude=true}={}) {
+  function roof(cx,cz,width,depth,eaveY,pitchDegrees,{mini=false,gableMat=m.plaster,name='main-roof'}={}) {
     const pitch=THREE.MathUtils.degToRad(pitchDegrees),c=Math.cos(pitch),s=Math.sin(pitch),overhang=mini?.16:.31;
     const half=width/2,extent=half+overhang,peak=eaveY+half*Math.tan(pitch),length=depth+2*overhang,slope=extent/c;
-    if(bodyGable)mesh(gableGeometry(width,depth,half*Math.tan(pitch)),gableMat,[cx,eaveY,cz],`${name}-enclosed-gable`);
+    mesh(gableGeometry(width,depth,half*Math.tan(pitch)),gableMat,[cx,eaveY,cz],`${name}-enclosed-gable`);
     for(const side of [-1,1]) {
       const along=new THREE.Vector3(0,0,side),down=new THREE.Vector3(side*c,-s,0),normal=new THREE.Vector3(side*s,c,0);
       const orientation=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(along,down,normal));
@@ -366,93 +428,96 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
     return {peak,eaveY,extent,length,rise:half*Math.tan(pitch)};
   }
 
-  const gableMat=(p.wallKind==='stone'&&!p.timber)?m.mortar:preset==='village'?m.woodLight:m.plaster;
-  const mainRoof=roof(0,0,W,D,wallTop,p.roofPitch,{gableMat});
-  // Actual front and rear gable carpentry and a small attic window.
-  for(const [name,f]of Object.entries(faces).filter(([name])=>name==='front'||name==='back')) {
-    faceBox(f,0,wallTop+.015,.09,W+.05,.17,.15,m.woodDark,null,'gable-base-beam');
-    faceBeam(f,-hw+.08,wallTop+.05,0,wallTop+roofRise-.06,.09,.14,m.wood);
-    faceBeam(f,0,wallTop+roofRise-.06,hw-.08,wallTop+.05,.09,.14,m.wood);
-    if(p.timber) {
-      faceBeam(f,0,wallTop+.06,0,wallTop+roofRise-.08,.10,.13,m.wood);
-      for(const side of [-1,1])faceBeam(f,side*W*.22,wallTop+.06,side*W*.22,wallTop+roofRise*.50,.10,.105,m.woodLight);
-      for(let u=-hw+.27;u<hw;u+=.48) {
-        const h=roofRise*(1-(Math.abs(u)+.23)/hw)-.12;
-        if(h>.15&&Math.abs(u)>.44)faceBox(f,u,wallTop+h/2+.06,.035,.455,h,.035,m.woodLight,new THREE.Color().setScalar(.94+r()*.09),'gable-board-infill');
-      }
-    } else {
-      const rows=Math.floor(roofRise/.27);
-      for(let row=0;row<rows;row++) {
-        const yy=wallTop+.14+row*.27,limit=hw*(1-(yy-wallTop+.14)/roofRise);
-        for(let x=-limit+.2;x<limit-.1;x+=.5) {
-          if(Math.abs(x)<.43&&Math.abs(yy-(wallTop+roofRise*.28))<.4)continue;
-          faceBox(f,x,yy,.025,Math.min(.47,2*(limit-Math.abs(x))),.245,.06,m.stone,new THREE.Color().setScalar(.82+r()*.27),'gable-masonry');
+  function buildMainRoof() {
+    const W=roofWidth,D=roofDepth,hw=W/2,hd=D/2,roofRise=hw*Math.tan(THREE.MathUtils.degToRad(p.roofPitch));
+    const gableMat=(p.wallKind==='stone'&&!p.timber)?m.mortar:preset==='village'?m.woodLight:m.plaster;
+    const mainRoof=roof(0,0,W,D,wallTop,p.roofPitch,{gableMat});
+    // Actual front and rear gable carpentry and a small attic window.
+    for(const face of [faces.front,faces.back]) {
+      const f={...face,width:W,origin:[0,0,face.n[2]*hd]};
+      faceBox(f,0,wallTop+.015,.09,W+.05,.17,.15,m.woodDark,null,'gable-base-beam');
+      faceBeam(f,-hw+.08,wallTop+.05,0,wallTop+roofRise-.06,.09,.14,m.wood);
+      faceBeam(f,0,wallTop+roofRise-.06,hw-.08,wallTop+.05,.09,.14,m.wood);
+      if(p.timber) {
+        faceBeam(f,0,wallTop+.06,0,wallTop+roofRise-.08,.10,.13,m.wood);
+        for(const side of [-1,1])faceBeam(f,side*W*.22,wallTop+.06,side*W*.22,wallTop+roofRise*.50,.10,.105,m.woodLight);
+        for(let u=-hw+.27;u<hw;u+=.48) {
+          const h=roofRise*(1-(Math.abs(u)+.23)/hw)-.12;
+          if(h>.15&&Math.abs(u)>.44)faceBox(f,u,wallTop+h/2+.06,.035,.455,h,.035,m.woodLight,new THREE.Color().setScalar(.94+r()*.09),'gable-board-infill');
+        }
+      } else {
+        const rows=Math.floor(roofRise/.27);
+        for(let row=0;row<rows;row++) {
+          const yy=wallTop+.14+row*.27,limit=hw*(1-(yy-wallTop+.14)/roofRise);
+          for(let x=-limit+.2;x<limit-.1;x+=.5) {
+            if(Math.abs(x)<.43&&Math.abs(yy-(wallTop+roofRise*.28))<.4)continue;
+            faceBox(f,x,yy,.025,Math.min(.47,2*(limit-Math.abs(x))),.245,.06,m.stone,new THREE.Color().setScalar(.82+r()*.27),'gable-masonry');
+          }
         }
       }
+      if(roofRise>.8)window({u:0,y:wallTop+roofRise*.29,w:.54,h:Math.min(.56,roofRise*.32),lattice:true},f);
     }
-    if(roofRise>.8)window({face:name,u:0,y:wallTop+roofRise*.29,w:.54,h:Math.min(.56,roofRise*.32),lattice:true});
-  }
 
-  if(p.chimney) {
-    const cw=preset==='source'?.42:.66,cd=preset==='source'?.46:.72;
-    const localRoofY=wallTop+(hw-Math.abs(chimneyX))*Math.tan(THREE.MathUtils.degToRad(p.roofPitch));
-    const bottom=localRoofY-(cw/2+.06)*Math.tan(THREE.MathUtils.degToRad(p.roofPitch))-.12,top=mainRoof.peak+(preset==='source'?.30:.50),height=top-bottom;
-    box([chimneyX,bottom+height/2,chimneyZ],[cw,height,cd],m.mortar,qIdentity,null,'chimney-body');
-    for(let row=0;row<Math.ceil(height/.23);row++) {
-      const yy=bottom+.11+row*.23;if(yy>top-.03)continue;
-      for(const side of [-1,1]) {
-        for(let k=0;k<2;k++) {
-          box([chimneyX+(k-.5)*cw/2,yy,chimneyZ+side*(cd/2+.012)],[cw/2-.025,.205,.045],m.stone,qIdentity,new THREE.Color().setScalar(.8+r()*.27),'chimney-stones');
-          box([chimneyX+side*(cw/2+.012),yy,chimneyZ+(k-.5)*cd/2],[.045,.205,cd/2-.025],m.stone,qIdentity,new THREE.Color().setScalar(.8+r()*.27),'chimney-stones');
+    if(p.chimney) {
+      const chimneyX=preset==='source'?hw*.78:-hw*.61,chimneyZ=preset==='source'?-hd*.58:-D*.12;
+      const cw=preset==='source'?.42:.66,cd=preset==='source'?.46:.72;
+      const localRoofY=wallTop+(hw-Math.abs(chimneyX))*Math.tan(THREE.MathUtils.degToRad(p.roofPitch));
+      const bottom=localRoofY-(cw/2+.06)*Math.tan(THREE.MathUtils.degToRad(p.roofPitch))-.12,top=mainRoof.peak+(preset==='source'?.30:.50),height=top-bottom;
+      box([chimneyX,bottom+height/2,chimneyZ],[cw,height,cd],m.mortar,qIdentity,null,'chimney-body');
+      for(let row=0;row<Math.ceil(height/.23);row++) {
+        const yy=bottom+.11+row*.23;if(yy>top-.03)continue;
+        for(const side of [-1,1]) {
+          for(let k=0;k<2;k++) {
+            box([chimneyX+(k-.5)*cw/2,yy,chimneyZ+side*(cd/2+.012)],[cw/2-.025,.205,.045],m.stone,qIdentity,new THREE.Color().setScalar(.8+r()*.27),'chimney-stones');
+            box([chimneyX+side*(cw/2+.012),yy,chimneyZ+(k-.5)*cd/2],[.045,.205,cd/2-.025],m.stone,qIdentity,new THREE.Color().setScalar(.8+r()*.27),'chimney-stones');
+          }
         }
       }
-    }
-    box([chimneyX,top+.045,chimneyZ],[cw+.16,.13,cd+.16],m.stone,qIdentity,null,'chimney-cap');
-    box([chimneyX,top+.118,chimneyZ],[cw*.58,.018,cd*.58],m.void,qIdentity,null,'chimney-opening');
-    for(const side of [-1,1]) {
-      box([chimneyX+side*(cw/2+.025),top+.16,chimneyZ],[.11,.12,cd+.15],m.roofEdge,qIdentity,null,'chimney-rim');
-      box([chimneyX,top+.16,chimneyZ+side*(cd/2+.025)],[cw+.15,.12,.11],m.roofEdge,qIdentity,null,'chimney-rim');
+      box([chimneyX,top+.045,chimneyZ],[cw+.16,.13,cd+.16],m.stone,qIdentity,null,'chimney-cap');
+      box([chimneyX,top+.118,chimneyZ],[cw*.58,.018,cd*.58],m.void,qIdentity,null,'chimney-opening');
+      for(const side of [-1,1]) {
+        box([chimneyX+side*(cw/2+.025),top+.16,chimneyZ],[.11,.12,cd+.15],m.roofEdge,qIdentity,null,'chimney-rim');
+        box([chimneyX,top+.16,chimneyZ+side*(cd/2+.025)],[cw+.15,.12,.11],m.roofEdge,qIdentity,null,'chimney-rim');
+      }
     }
   }
+  inFrame(0,0,roofAngle,buildMainRoof);
 
   if(p.sideWing) {
-    const ww=Math.min(1.6,W*.33),wd=Math.min(2.8,D*.47),wx=-hw-ww*.43,wz=hd-wd/2-.38,wy=base+FH*(p.floors>1?1.52:.94);
+    const side=wingSide==='left'?-1:1;
+    const ww=wingWidth,wd=wingDepth,wx=side*(hw+ww*.43),wz=wingZ,wy=base+FH*(p.floors>1?1.52:.94);
     box([wx,base+(wy-base)/2,wz],[ww,wy-base,wd],m.mortar,qIdentity,null,'side-wing-walls');
     const wf={n:[0,0,1],t:[1,0,0],origin:[wx,0,wz+wd/2],angle:0,width:ww};
     const wingRows=Math.ceil((wy-base)/.42),wingCourse=(wy-base)/wingRows;
     for(let row=0;row<wingRows;row++)for(let col=0;col<3;col++)faceBox(wf,(col-1)*ww/3,base+(row+.5)*wingCourse,.03,ww/3-.025,wingCourse-.025,.07,row%2?m.stone:m.stoneAlt,new THREE.Color().setScalar(.91+r()*.15),'side-wing-stones');
-    roof(wx,wz,ww,wd,wy,p.roofPitch,{mini:true,gableMat:m.mortar,name:'side-wing-roof',exclude:false});
+    roof(wx,wz,ww,wd,wy,p.roofPitch,{mini:true,gableMat:m.mortar,name:'side-wing-roof'});
     window({u:0,y:base+FH*.55,w:.48,h:.74,lattice:true},wf);
     if(p.floors>1)window({u:0,y:base+FH*1.22,w:.43,h:.57,lattice:true},wf);
     // Fully enclosed outer wall with projecting stone courses.
-    for(let row=0;row<wingRows;row++)for(let col=0;col<4;col++)box([wx-ww/2-.02,base+(row+.5)*wingCourse,wz-wd/2+(col+.5)*wd/4],[.07,wingCourse-.025,wd/4-.03],row%2?m.stone:m.stoneAlt,qIdentity,new THREE.Color().setScalar(.91+r()*.16),'side-wing-stones');
+    for(let row=0;row<wingRows;row++)for(let col=0;col<4;col++)box([wx+side*(ww/2+.02),base+(row+.5)*wingCourse,wz-wd/2+(col+.5)*wd/4],[.07,wingCourse-.025,wd/4-.03],row%2?m.stone:m.stoneAlt,qIdentity,new THREE.Color().setScalar(.91+r()*.16),'side-wing-stones');
   }
 
-  if(p.dormer) {
+  if(p.dormer)inFrame(0,0,roofAngle,()=>{
     // A solid side-facing dormer with its own gabled roof and glass recess.
-    const dx=hw*.64,dz=D*.09,dw=1.04,dd=.85;
-    const y=wallTop+(hw-(dx+dd/2))*Math.tan(THREE.MathUtils.degToRad(p.roofPitch))+.015;
+    const dx=roofWidth*.32,dz=roofDepth*.09,dw=1.04,dd=.85;
+    const y=wallTop+(roofWidth/2-(dx+dd/2))*Math.tan(THREE.MathUtils.degToRad(p.roofPitch))+.015;
     box([dx,y+.36,dz],[dd,.72,dw],m.plaster,qIdentity,null,'dormer-body');
     // Local roof assembled as a group, then turned 90 degrees around Y.
-    const before=new Set(group.children),oldBatches=new Set(batches.keys());
-    const marker='dormer-roof';
-    roof(0,0,dw,dd,y+.72,42,{mini:true,gableMat:m.plaster,name:marker,exclude:false});
-    // Transform both direct gable geometry and queued instance matrices.
-    const turn=new THREE.Matrix4().makeRotationY(Math.PI/2);turn.setPosition(dx,0,dz);
-    for(const child of group.children)if(!before.has(child)){child.applyMatrix4(turn);}
-    for(const [key,b]of batches)if(!oldBatches.has(key)&&b.name.startsWith(marker))for(const mtx of b.matrices)mtx.premultiply(turn);
+    inFrame(dx,dz,Math.PI/2,()=>roof(0,0,dw,dd,y+.72,42,{mini:true,gableMat:m.plaster,name:'dormer-roof'}));
     const df={n:[1,0,0],t:[0,0,-1],origin:[dx+dd/2,0,dz],angle:Math.PI/2,width:dw};
     window({u:0,y:y+.39,w:.58,h:.48,lattice:false},df);
     faceBox(df,0,y+.04,.12,dw+.10,.10,.13,m.wood,null,'dormer-sill');
-  }
+  });
 
   if(p.porch) {
-    const {width:pw,depth:pd,z:pz,roofY:py,deck,step}=entrance.porch;
-    for(const side of [-1,1])box([doorX+side*(pw/2-.10),py/2,pz+pd/2-.10],[.15,py,.15],m.wood,qIdentity,null,'porch-posts');
-    box([doorX,py-.10,pz+pd/2-.10],[pw,.18,.18],m.woodDark,qIdentity,null,'porch-crossbeam');
-    roof(doorX,pz,pw,pd,py,30,{mini:true,gableMat:m.wood,name:'porch-roof',exclude:false});
-    box([deck.x,deck.y,deck.z],[deck.width,deck.height,deck.depth],m.wood,qIdentity,null,'porch-deck');
-    box([step.x,step.y,step.z],[step.width,step.height,step.depth],m.foundation,qIdentity,null,'porch-step');
+    const {width:pw,depth:pd,x,z,roofY:py,deck,step}=entrance.porch;
+    inFrame(x,z,doorAngle,()=>{
+      for(const side of [-1,1])box([side*(pw/2-.10),py/2,pd/2-.10],[.15,py,.15],m.wood,qIdentity,null,'porch-posts');
+      box([0,py-.10,pd/2-.10],[pw,.18,.18],m.woodDark,qIdentity,null,'porch-crossbeam');
+      roof(0,0,pw,pd,py,30,{mini:true,gableMat:m.wood,name:'porch-roof'});
+    });
+    box([deck.x,deck.y,deck.z],[deck.width,deck.height,deck.depth],m.wood,doorRotation,null,'porch-deck');
+    box([step.x,step.y,step.z],[step.width,step.height,step.depth],m.foundation,doorRotation,null,'porch-step');
   }
 
   function barrel(x,z,scale=1) {
@@ -467,7 +532,16 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
     }
   }
   if(p.planters) {
-    const planterX=preset==='cottage'?-hw*.64:-hw*.48,pw=Math.min(1.45,W*.30),pz=hd+.39;
+    const defaultX=preset==='cottage'?-hw*.64:-hw*.48,pw=Math.min(1.45,W*.30),pz=hd+.39;
+    const clearance=((entrance.porch?.deck.width??entrance.doorStep.width)+pw)/2+.015;
+    const planterX=[defaultX,-hw+pw/2,hw-pw/2].find(x=>doorFace!=='front'||Math.abs(x-doorU)>=clearance);
+    // A centred porch on a narrow house can occupy the entire front garden.
+    const gardenAngle=planterX===undefined?Math.PI:0;
+    inFrame(0,0,gardenAngle,()=>buildPlanter(planterX??defaultX,pw,pz));
+    const barrelSide=doorFace==='left'?1:-1;
+    barrel(barrelSide*(hw+.35),hd-.05,.95);
+  }
+  function buildPlanter(planterX,pw,pz) {
     box([planterX,.23,pz],[pw,.35,.53],m.woodDark,qIdentity,null,'planter-box');
     box([planterX,.405,pz],[pw-.13,.025,.39],m.soil,qIdentity,null,'planter-soil');
     for(let i=0;i<Math.ceil(pw/.19);i++)box([planterX-pw/2+(i+.5)*pw/Math.ceil(pw/.19),.24,pz+.285],[pw/Math.ceil(pw/.19)-.014,.31,.065],m.woodLight,qIdentity,null,'planter-boards');
@@ -482,8 +556,6 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
         instance(flowerGeo,m.flowerCore,[x,y+lh+.035,z],[.019,.016,.019],qIdentity,null,'flower-centres');
       }
     }
-    // Barrel is deliberately beside the façade, clear of the doorway path.
-    barrel(-hw-.35,hd-.05,.95);
   }
 
   let instanceCount=0;
@@ -501,8 +573,9 @@ export function buildHouse(params = {}, textures = {}, resources = {}) {
   group.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(group),size=bounds.getSize(new THREE.Vector3());
   group.userData={params:p,preset,parts:group.children.length,instances:instanceCount,entrance,
+    wallWindows:windows.map(({face,floor,u,y,w,h,scaleX=1})=>({face,floor,u,y,w:w*scaleX,h})),
     bounds:{min:bounds.min.toArray(),max:bounds.max.toArray(),size:size.toArray()},
-    frontage:'+Z',ridgeAxis:'Z',geometry:'enclosed procedural 3D house',
+    frontage:{front:'+Z',back:'-Z',left:'-X',right:'+X'}[doorFace],ridgeAxis:p.roofRotation===90?'X':'Z',geometry:'enclosed procedural 3D house',
     textureContract:'Textures stay caller-owned; mapped materials use white tint.',
   };
   Object.defineProperty(group.userData,'ownedTextures',{value:[...ownedTextures],enumerable:false});

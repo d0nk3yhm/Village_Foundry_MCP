@@ -6,8 +6,8 @@
     "version": "1.0.0"
   },
   "archiveFolder": "village-foundry-mcp",
-  "sourceBytes": 10687095,
-  "fileCount": 73,
+  "sourceBytes": 10710311,
+  "fileCount": 74,
   "scope": "Source entries only; this generated manifest does not hash itself.",
   "includeRoots": [
     "README.md",
@@ -42,8 +42,8 @@
     {
       "path": "README.md",
       "archivePath": "village-foundry-mcp/README.md",
-      "bytes": 27541,
-      "sha256": "6480fb54b756befb669c68b513b0dfc0e6f9ae0be9aa467f5fee812d94855154",
+      "bytes": 28791,
+      "sha256": "514359d69313e83f7411d23bb69870f2764895ab73af51bc78719cc71b32101f",
       "mode": "0644"
     },
     {
@@ -56,8 +56,8 @@
     {
       "path": "dist/app.js",
       "archivePath": "village-foundry-mcp/dist/app.js",
-      "bytes": 89456,
-      "sha256": "b0d8bea1011858a70cc075fba4dadd6988d4256ec8ea08e4d511c54c0883eb81",
+      "bytes": 90729,
+      "sha256": "12566c6dc890365fce0ed316797eaf5fb3e3f71479ef4765e7f297b4f21aabed",
       "mode": "0644"
     },
     {
@@ -182,22 +182,22 @@
     {
       "path": "dist/house-model.mjs",
       "archivePath": "village-foundry-mcp/dist/house-model.mjs",
-      "bytes": 36311,
-      "sha256": "71bc018275d29c169d2378df775fad380cdf6920240165fa081811963f4cab75",
+      "bytes": 40296,
+      "sha256": "caa63800a2c5f90605cbb45145af84a4663fe534cf330a51500e1a52b4436711",
       "mode": "0644"
     },
     {
       "path": "dist/house-schema.mjs",
       "archivePath": "village-foundry-mcp/dist/house-schema.mjs",
-      "bytes": 5376,
-      "sha256": "6ca440ee0dd661478240b8803b550ddd176193eaafc9739c23d55e41a68374ba",
+      "bytes": 8937,
+      "sha256": "9f8b65d87d573fb2ed250110e0dd03d65a68624f5b12c2488fbc449a871d27b1",
       "mode": "0644"
     },
     {
       "path": "dist/index.html",
       "archivePath": "village-foundry-mcp/dist/index.html",
-      "bytes": 39413,
-      "sha256": "e7b1c65f18deb52fcd604695820202791b95e7a8bbef50bbdae70bedd3f1493f",
+      "bytes": 40678,
+      "sha256": "96150d76cec5ce6ade61360aa9b33ffb96fc00d95aa4ebce7b2b54ce7787152b",
       "mode": "0644"
     },
     {
@@ -238,15 +238,15 @@
     {
       "path": "dist/map-model.mjs",
       "archivePath": "village-foundry-mcp/dist/map-model.mjs",
-      "bytes": 53343,
-      "sha256": "e0df758448f2c597663bd5c4743285fec5e98a30f417b1897a4ac616a7e427de",
+      "bytes": 54416,
+      "sha256": "e015d53eab0a4d7d43b5ade15d9b92ea231cb69159ca4aff02fe8ee5cce82322",
       "mode": "0644"
     },
     {
       "path": "dist/map-schema.mjs",
       "archivePath": "village-foundry-mcp/dist/map-schema.mjs",
-      "bytes": 2702,
-      "sha256": "c8fe10c94910efc8d443a780fd7aced650e9468fdebcf9e2d6b416137112f1e2",
+      "bytes": 2795,
+      "sha256": "2e47e685a233f82db3b82543ee4d9e18cb93cf16576bafa4178a29305714dc51",
       "mode": "0644"
     },
     {
@@ -287,8 +287,8 @@
     {
       "path": "dist/style.css",
       "archivePath": "village-foundry-mcp/dist/style.css",
-      "bytes": 56489,
-      "sha256": "2fd37ae8d5792cabf320ab9c2e99357ef10f2c5038f97732e71a7527dbeff45c",
+      "bytes": 56826,
+      "sha256": "a5bc1f36b6814324880f1d3b6d287d18d684894d500662405d3716edf9f4fac5",
       "mode": "0644"
     },
     {
@@ -420,8 +420,8 @@
     {
       "path": "scripts/build-worker.mjs",
       "archivePath": "village-foundry-mcp/scripts/build-worker.mjs",
-      "bytes": 5844,
-      "sha256": "64e119cbb5617bff02c5e53e5beb7ed3e0c74a62dfba05d6673a51ed6fccb60c",
+      "bytes": 5887,
+      "sha256": "e5746a6071bb357b4195d31d14c9957ea36a60e203e05a45ed02f53e09ae6492",
       "mode": "0644"
     },
     {
@@ -462,8 +462,8 @@
     {
       "path": "scripts/verify-assets.mjs",
       "archivePath": "village-foundry-mcp/scripts/verify-assets.mjs",
-      "bytes": 11184,
-      "sha256": "921e234c0f5ea26a3e94efc263698eb781582cc3fdae04c96ab0bb04a9ad51ba",
+      "bytes": 11102,
+      "sha256": "3006afe95824bb2909acd8d3f3b0886e287e75963ebcb5702aab0223c1079a8c",
       "mode": "0644"
     },
     {
@@ -483,8 +483,8 @@
     {
       "path": "src/worker.mjs",
       "archivePath": "village-foundry-mcp/src/worker.mjs",
-      "bytes": 63156,
-      "sha256": "208f15b73f60f84b8e25662e0a57104eec8257d4200cd0c3b5c1651a6e03f05d",
+      "bytes": 65331,
+      "sha256": "485d385d3f517c9fd4871ecf22661d03ee977779c35515dc9b15c6b0320d32c6",
       "mode": "0644"
     },
     {
@@ -504,8 +504,15 @@
     {
       "path": "tests/app-state.test.mjs",
       "archivePath": "village-foundry-mcp/tests/app-state.test.mjs",
-      "bytes": 8520,
-      "sha256": "4c3303daaf2821d7bee96914e9d77705faaf78023ffc0a190d409f1fb28ece4f",
+      "bytes": 9537,
+      "sha256": "2c46c6e0fb36c6a73608ad382119c6839a7b718c07c47df105fc2a8484cf2f14",
+      "mode": "0644"
+    },
+    {
+      "path": "tests/house-layout.test.mjs",
+      "archivePath": "village-foundry-mcp/tests/house-layout.test.mjs",
+      "bytes": 4365,
+      "sha256": "5e843905138162f58cbf06ad762e64256e68cb27fad5f3de170941a30d4110af",
       "mode": "0644"
     },
     {
@@ -518,8 +525,8 @@
     {
       "path": "tests/mcp-connection.test.mjs",
       "archivePath": "village-foundry-mcp/tests/mcp-connection.test.mjs",
-      "bytes": 9161,
-      "sha256": "ee99562c0625293e2052414ad1fe0a722e4d5ee9174f0b8ed0edc07c296b8f9d",
+      "bytes": 9179,
+      "sha256": "04915401459fd2715fb88ac07c56749fb591f54a2965527cbbe076de18114632",
       "mode": "0644"
     },
     {
@@ -539,8 +546,8 @@
     {
       "path": "tests/worker.test.mjs",
       "archivePath": "village-foundry-mcp/tests/worker.test.mjs",
-      "bytes": 61900,
-      "sha256": "3d73b278b7d3ce7292c005800d429c661352dc2f35eaaf7c9f945ec660368e76",
+      "bytes": 64743,
+      "sha256": "f82730e643cda0b8654d077bee706a0076d7cdcde7b626d142c8fb414fa9695a",
       "mode": "0644"
     }
   ]

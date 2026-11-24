@@ -1,3 +1,5 @@
+import { HOUSE_PRESETS } from './house-schema.mjs';
+
 /** Pure configuration shared by the browser map builder and MCP validation. */
 export const MAP_PRESETS = Object.freeze({
   village: Object.freeze({ label: 'Island village', width: 80, depth: 80, houseCount: 10,
@@ -24,7 +26,7 @@ export function normalizeMap(config = {}) {
   }
   const preset = Object.hasOwn(MAP_PRESETS, config.preset) ? config.preset : 'village';
   const base = MAP_PRESETS[preset];
-  const housePreset = ['mixed', 'village', 'cottage', 'inn', 'manor', 'source'].includes(config.housePreset)
+  const housePreset = config.housePreset === 'mixed' || (typeof config.housePreset === 'string' && Object.hasOwn(HOUSE_PRESETS, config.housePreset))
     ? config.housePreset : base.housePreset;
   return {
     preset,

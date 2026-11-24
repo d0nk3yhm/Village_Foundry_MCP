@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import { buildHouse, disposeHouse, houseEntrance } from './house-model.mjs';
+import { PRESETS as HOUSE_PRESETS } from './house-schema.mjs';
 import { createPaintedSurface } from './painted-surfaces.mjs';
 import { makeIslandBoundary, buildIslandLandscape } from './island-landscape.mjs';
 import { normalizeMap, MAP_PRESETS } from './map-schema.mjs';
@@ -147,7 +148,13 @@ function plan(config,boundary=null){
       const sample=alongPath(path,station);if(!sample)continue;
       const seed=(config.seed+104729*(++candidateIndex))%2147483648,pick=r();
       const preset=config.housePreset==='mixed'?(pick<.45?'village':pick<.66?'cottage':pick<.82?'source':pick<.95?'inn':'manor'):config.housePreset;
-      const compact=config.houseCount>16,width=rounded(6+r()*(compact?.40:preset==='inn'?1.55:1.05)),depth=rounded(6+r()*(compact?.65:preset==='inn'?2.15:1.65));
+      const compact=config.houseCount>16,template=HOUSE_PRESETS[preset];
+      const useTemplateShape=['longhouse','gatehouse','weaver'].includes(preset);
+      const houseWidth=useTemplateShape?rounded(template.width+(r()-.5)*.6):rounded(6+r()*(compact?.40:preset==='inn'?1.55:1.05));
+      const houseDepth=useTemplateShape?rounded(template.depth+(r()-.5)*.8):rounded(6+r()*(compact?.65:preset==='inn'?2.15:1.65));
+      // Parcels face the road. Turn the building so its chosen entrance faces the gate.
+      const sideDoor=template.doorFace==='left'||template.doorFace==='right';
+      const width=sideDoor?houseDepth:houseWidth,depth=sideDoor?houseWidth:houseDepth;
       const frontMargin=compact?.82+r()*.25:.95+r()*.65,backMargin=compact?.55+r()*.55:config.gardens&&r()<.42?2.65+r()*1.15:.72+r()*1.35,plotWidth=width+(compact?1.05+r()*.3:1.35+r()*.55);
       const outward=[-sample.tangent[1]*side,sample.tangent[0]*side],front=[-outward[0],-outward[1]],setback=path.width/2+frontMargin+depth/2+.5+r()*.6+layer*7.6;
       const drift=(r()-.5)*1.35,x=sample.point[0]+outward[0]*setback+sample.tangent[0]*drift,z=sample.point[1]+outward[1]*setback+sample.tangent[1]*drift;
@@ -156,15 +163,18 @@ function plan(config,boundary=null){
       if(polygon.some((p,i)=>Math.abs(p[0])>W/2-.65||Math.abs(p[1])>D/2-.65||!inlandSegment(p,polygon[(i+1)%polygon.length],.4)))continue;
       if(roads.some(segment=>segmentNearPolygon(segment,polygon,segment.width/2+.22)))continue;
       if(river&&river.segments.some(segment=>segmentNearPolygon(segment,polygon,river.width/2+.85)))continue;
-      const entry=houseEntrance({preset,width,depth,porch:false}),doorLocal=entry.x,door=transform(entry.x,entry.z),gate=transform(doorLocal,frontZ);
+      const entry=houseEntrance({preset,width:houseWidth,depth:houseDepth,porch:false});
+      const buildingRotation=rotation-Math.atan2(...entry.direction)*180/Math.PI;
+      const buildingTransform=worldTransform(x,z,buildingRotation);
+      const doorLocal=entry.u,door=buildingTransform(entry.x,entry.z),gate=transform(doorLocal,frontZ);
       const nearest=nearestRoad(gate,roads.filter(segment=>segment.pathId===path.id));
-      const approach=transform(entry.approach.x,entry.approach.z);
+      const approach=buildingTransform(entry.approach.x,entry.approach.z);
       const points=[door,gate,nearest.point.map(rounded)],entrance={id:`candidate-entry-${candidateIndex}`,points,width:1.18,surface:'dirt'};
       const entrySegments=pathSegments(entrance,config.roads);entrySegments[0].thresholdWidth=entry.width+.20;
       if(entrySegments.some(segment=>!inlandSegment(segment.start,segment.end,segment.width/2+.10)))continue;
       if(river&&entrySegments.some(segment=>river.segments.some(water=>segmentIntersects(segment.start,segment.end,water.start,water.end))))continue;
       const score=Math.min(...hubs.map(h=>Math.hypot((x-h[0])/W,(z-h[1])/D)))+r()*.19+routeIndex*.018+layer*.08;
-      candidates.push({seed,preset,width,depth,frontMargin,backMargin,plotWidth,frontZ,backZ,x:rounded(x),z:rounded(z),rotation,polygon,doorLocal,door,gate,approach,entry,entrySegments,entrance,score,transform});
+      candidates.push({seed,preset,width,depth,houseWidth,houseDepth,buildingRotation,useTemplateShape,frontMargin,backMargin,plotWidth,frontZ,backZ,x:rounded(x),z:rounded(z),rotation,polygon,doorLocal,door,gate,approach,entry,entrySegments,entrance,score,transform});
     }
   }
   candidates.sort((a,b)=>a.score-b.score);
@@ -187,10 +197,11 @@ function plan(config,boundary=null){
     if(entrancePaths.some(segment=>segmentNearPolygon(segment,candidate.polygon,segment.width/2+.3)))continue;
     if(candidate.entrySegments.some(segment=>plots.some(plot=>segmentNearPolygon(segment,plot.polygon,segment.width/2+.28))))continue;
     const i=buildings.length,id=`house-${String(i+1).padStart(2,'0')}`,c=candidate,t=c.transform,rr=randomFor(c.seed);
-    const floors=['cottage','source'].includes(c.preset)?1:c.preset==='inn'&&rr()>.55?3:2;
-    const params={preset:c.preset,seed:c.seed,paintSeed:config.seed,width:c.width,depth:c.depth,floors,floorHeight:1.70+Math.round(rr()*12)/100,roofPitch:Math.round(42+rr()*9),
+    const template=HOUSE_PRESETS[c.preset];
+    const floors=c.useTemplateShape?template.floors:['cottage','source'].includes(c.preset)?1:c.preset==='inn'&&rr()>.55?3:2;
+    const params={preset:c.preset,seed:c.seed,paintSeed:config.seed,width:c.houseWidth,depth:c.houseDepth,floors,floorHeight:1.70+Math.round(rr()*12)/100,roofPitch:c.useTemplateShape?template.roofPitch:Math.round(42+rr()*9),
       roofColor:config.roofColor,stoneColor:config.stoneColor,woodColor:config.woodColor,wallColor:config.plasterColor,
-      roofKind:'shingles',wallKind:c.preset==='cottage'?'plaster':'stone',timber:!['source','manor'].includes(c.preset),
+      roofKind:'shingles',wallKind:c.useTemplateShape?template.wallKind:c.preset==='cottage'?'plaster':'stone',timber:c.useTemplateShape?template.timber:!['source','manor'].includes(c.preset),
       chimney:rr()>.17,dormer:floors>1&&rr()>.78,porch:false,sideWing:false,shutters:rr()>.5,planters:rr()>.2};
     const footprintPolygon=[t(-c.width/2,-c.depth/2),t(c.width/2,-c.depth/2),t(c.width/2,c.depth/2),t(-c.width/2,c.depth/2)];
     const plot={id:`plot-${i+1}`,buildingId:id,...boundsOf(c.polygon),polygon:c.polygon,gate:c.gate,gateWidth:1.70,rotation:c.rotation};plots.push(plot);
@@ -204,8 +215,8 @@ function plan(config,boundary=null){
       const gardenWidth=c.width*.68,gardenDepth=Math.min(c.backMargin-.35,2.25),center=t((rr()-.5)*.6,-c.depth/2-gardenDepth/2-.22);
       if(gardenDepth>.6)gardens.push({id:`garden-${gardens.length+1}`,buildingId:id,x:center[0],z:center[1],width:gardenWidth,depth:gardenDepth,rotation:c.rotation,rows:Math.max(2,Math.round(gardenDepth/.55))});
     }
-    buildings.push({id,seed:c.seed,x:c.x,z:c.z,rotation:c.rotation,rotationDegrees:c.rotation,params,
-      interior:{preset:c.preset==='inn'?'tavern':c.preset==='manor'?'workshop':'cottage',width:c.width,depth:c.depth,seed:c.seed,floor:0},
+    buildings.push({id,seed:c.seed,x:c.x,z:c.z,rotation:c.buildingRotation,rotationDegrees:c.buildingRotation,params,
+      interior:{preset:c.preset==='inn'?'tavern':['manor','weaver'].includes(c.preset)?'workshop':'cottage',width:c.houseWidth,depth:c.houseDepth,seed:c.seed,floor:0},
       entrance:{x:c.door[0],z:c.door[1],width:c.entry.width,overlap:c.entry.overlap,approach:c.approach,gate:c.gate,road:c.entrance.points.at(-1),local:c.entry},
       footprint:{...boundsOf(footprintPolygon),polygon:footprintPolygon}});
   }

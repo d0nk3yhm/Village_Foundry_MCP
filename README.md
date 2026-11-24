@@ -86,7 +86,11 @@ For a browser-only preview without local MCP or saved server exports, `python3 -
 
 ## Create scenes
 
-**Houses** start from five architectural templates: village house, red-roof house, cottage, inn, or manor. Adjust dimensions, floors, roof pitch, furnishings, and materials, or generate controlled variations. House batches support **1–500 sprites** in one ZIP, with an editable JSON recipe for each house and a manifest.
+**Houses** start from eight templates. The farm longhouse has a centered side entrance, the stone gatehouse has a crosswise roof, and the weaver’s townhouse has three narrow storeys. The village merchant house, red-roof stone house, cottage, inn, and manor are also available.
+
+Under **Doors & windows**, choose a wall and place the door at its left, center, or right as viewed from outside. The steps and porch follow the door. Set each main wall to **Automatic** or choose **0–3 windows per floor**. Windows can be evenly spaced or grouped toward one end. Attic, dormer, and wing windows are separate architectural details. Under **Structure → Roof ridge**, choose a front-to-back or side-to-side ridge.
+
+House batches export **1–500 sprites** with editable JSON recipes. Choose **Current house layout** to keep your door, window, and roof settings across the batch. Choose **Mixed village** to vary layouts across all eight templates.
 
 **Interiors** start from a tavern, cottage, inn, or workshop. Recipes support dimensions from 6–20 world units, six layout families or seeded automatic selection, 0–6 bedrooms, and up to three floors. `floorIndex` is zero-based and must be below `floorCount`; use the same seed across a building's floors so the layout can align its stairs. Kitchens, stairs, and occupants have explicit switches; occupants default off. Furniture controls allow 0–12 tables and 0–12 extra beds, with bedrooms supplying their own beds. The room brief interprets explicit rules, while MCP can place supported furniture by ID and coordinates.
 
@@ -186,6 +190,23 @@ Use `cancel_export` to clear a pending request that is no longer needed or canno
 | `cancel_export` | Cancel the latest pending render, optionally checking its ID and revision. |
 
 Scene edits can include `expectedRevision` to detect concurrent changes. Update tools apply to their matching scene type; furniture tools require an interior and animation tools require a character. Recipes use the version 1 formats `house-foundry`, `house-foundry-interior`, `village-foundry-map`, and `village-foundry-character`. Render style is restricted to `illustrated` or `pixel`; arbitrary code is never accepted as a scene.
+
+For example, call `generate_house` with these arguments for a longhouse with a centered right-side entrance, a transverse ridge, three front windows and one right-side window per storey.
+
+```json
+{
+  "params": {
+    "preset": "longhouse",
+    "doorFace": "right",
+    "doorPosition": "center",
+    "roofRotation": 90,
+    "windowCounts": { "front": 3, "right": 1 },
+    "windowAlignment": "even"
+  }
+}
+```
+
+To edit that house, call `update_house` with `{"patch":{"windowCounts":{"right":0}}}` to clear the right wall’s main windows, or use `null` for that wall to restore automatic placement. Other walls keep their counts.
 
 The interior furniture inventory includes tables, round tables, chairs, benches, stools, barrels, shelves, beds, chests, plants, rugs, bars, counters, stoves, sinks, workbenches, crates, sacks, cupboards, wardrobes, washbasins, and fireplaces. `list_templates` returns the current inventory and validated limits.
 

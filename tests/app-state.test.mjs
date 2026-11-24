@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
-import {PRESETS, DEFAULT_PARAMS, normalizeHouse} from '../dist/house-schema.mjs';
+import {PRESETS, HOUSE_MATERIAL_FAMILIES, normalizeHouse} from '../dist/house-schema.mjs';
+import {randomizeHouse} from '../dist/house-model.mjs';
+import * as THREE from '../dist/vendor/three.module.js';
 import {INTERIOR_PRESETS, normalizeInterior} from '../dist/interior-schema.mjs';
 import {MAP_PRESETS, normalizeMap} from '../dist/map-schema.mjs';
 import {CHARACTER_PRESETS, CHARACTER_DURATIONS, normalizeCharacter} from '../dist/character-schema.mjs';
@@ -15,7 +17,7 @@ const source = (await readFile(new URL('../dist/app.js', import.meta.url), 'utf8
 function controller(storage = new Map()) {
   const elements = new Map();
   const context = vm.createContext({
-    PRESETS, DEFAULT_PARAMS, normalizeHouse, INTERIOR_PRESETS, normalizeInterior,
+    PRESETS, HOUSE_MATERIAL_FAMILIES, normalizeHouse, THREE, randomizeHouse, INTERIOR_PRESETS, normalizeInterior,
     MAP_PRESETS, normalizeMap, CHARACTER_PRESETS, CHARACTER_DURATIONS, normalizeCharacter,
     MATERIAL_CATALOG, MATERIAL_FAMILIES, Blob, URL, console,
     location: {origin: 'https://foundry.example'},
@@ -56,6 +58,20 @@ test('workspace reload retains shared master detail and independent fixed canvas
     assert.equal(next.run('interiorState.output.width'), 640);
     assert.equal(next.run('interiorState.output.fit'), 'pad');
   }
+});
+
+test('house facades survive current-template variations, JSON recipes and workspace reload', () => {
+  const app = controller();
+  const facade = { doorFace: 'right', doorPosition: 'center', roofRotation: 90,
+    windowAlignment: 'left', windowCounts: { front: 0, right: 3 } };
+  app.run(`state = baseRecipe('weaver', 42); Object.assign(state.params, ${JSON.stringify(facade)});`);
+  app.run(`state = variedRecipe(state.params.preset, 43, 1, state); state = validateRecipe(JSON.parse(JSON.stringify(state))); saveWorkspace();`);
+  const reloaded = controller(app.storage);
+  reloaded.run('restoreWorkspace();');
+  const params = JSON.parse(reloaded.run('JSON.stringify(state.params)'));
+  assert.equal(params.preset, 'weaver');
+  assert.equal(params.seed, 43);
+  for (const [key, expected] of Object.entries(facade)) assert.deepEqual(params[key], expected);
 });
 
 function pendingController(status) {
