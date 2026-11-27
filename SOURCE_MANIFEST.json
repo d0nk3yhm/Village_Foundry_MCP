@@ -6,8 +6,8 @@
     "version": "1.0.0"
   },
   "archiveFolder": "village-foundry-mcp",
-  "sourceBytes": 10710311,
-  "fileCount": 74,
+  "sourceBytes": 10711689,
+  "fileCount": 75,
   "scope": "Source entries only; this generated manifest does not hash itself.",
   "includeRoots": [
     "README.md",
@@ -40,10 +40,17 @@
       "mode": "0644"
     },
     {
+      "path": "LICENSE",
+      "archivePath": "village-foundry-mcp/LICENSE",
+      "bytes": 1065,
+      "sha256": "a374c41c826fd9a7ce32fc03759f5114c1bbee1fb6d0e792a2f74060c83e54b8",
+      "mode": "0644"
+    },
+    {
       "path": "README.md",
       "archivePath": "village-foundry-mcp/README.md",
-      "bytes": 28791,
-      "sha256": "514359d69313e83f7411d23bb69870f2764895ab73af51bc78719cc71b32101f",
+      "bytes": 29060,
+      "sha256": "dd1883b0d40ce435e7f3107cf0988092c48b898820f848b113ca42c43201d9b9",
       "mode": "0644"
     },
     {
@@ -406,15 +413,15 @@
     {
       "path": "package-lock.json",
       "archivePath": "village-foundry-mcp/package-lock.json",
-      "bytes": 574,
-      "sha256": "5f4344d9d3aa84caeb5359f5620d4ff6b438bb334c93d26e17f146fa7460c813",
+      "bytes": 598,
+      "sha256": "45ffb0b5d4304b7728b2855d2e62db7ded023a4d6b5f0c6993be2bc0e0288006",
       "mode": "0644"
     },
     {
       "path": "package.json",
       "archivePath": "village-foundry-mcp/package.json",
-      "bytes": 627,
-      "sha256": "46803ba5ac96eb60d60213b3ac1308080e16cec1e7045221d6aba962f4328e34",
+      "bytes": 647,
+      "sha256": "2ded2d058a3f6f35015bfdc5fa28bc09017bbfe1475f0c80e62216645c7aacb9",
       "mode": "0644"
     },
     {

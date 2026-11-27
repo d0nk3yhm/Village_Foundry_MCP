@@ -263,7 +263,11 @@ git remote add origin YOUR_GITHUB_REPOSITORY_URL
 git push -u origin main
 ```
 
-The included Three.js license is at `dist/vendor/THREE_LICENSE.txt`.
+## License
+
+The original Village Foundry MCP code and documentation are available under the [MIT License](LICENSE).
+Three.js retains its [upstream MIT notice](dist/vendor/THREE_LICENSE.txt).
+The supplied PNG tiles listed in the [material source inventory](dist/assets/materials/sources.json) are outside the scope of the project license.
 
 ## Geometry
 

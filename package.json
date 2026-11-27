@@ -2,6 +2,7 @@
   "name": "village-foundry-mcp",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Procedural medieval villages, buildings, interiors and animated characters with transparent orthographic exports and MCP control",
   "engines": {"node": ">=20"},
